@@ -1,0 +1,344 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-header);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.headerInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+/* Logo */
+.logo {
+  flex-shrink: 0;
+}
+
+/* Nav */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.navLink {
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-700);
+  transition: color var(--transition-fast);
+  position: relative;
+  white-space: nowrap;
+}
+
+.navLink::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0.875rem;
+  right: 0.875rem;
+  height: 2px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transition: transform var(--transition-fast);
+}
+
+.navLink:hover {
+  color: var(--color-primary-dark);
+}
+
+.navLink:hover::after {
+  transform: scaleX(1);
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--color-gray-700);
+  transition: background var(--transition-fast), color var(--transition-fast);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  background: var(--color-gray-100);
+  color: var(--color-primary);
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-size: 0.625rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.btnEntrar {
+  height: 38px;
+  padding: 0 1.25rem;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.btnEntrar:hover {
+  background: var(--color-primary-dark);
+}
+
+/* Search */
+.searchWrapper {
+  position: relative;
+}
+
+.searchDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 300px;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card-hover);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 200;
+}
+
+.searchIcon {
+  color: var(--color-gray-400);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-dark);
+  background: transparent;
+}
+
+.searchInput::placeholder {
+  color: var(--color-gray-400);
+}
+
+.searchResults {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card-hover);
+  overflow: hidden;
+  z-index: 300;
+}
+
+.searchResult {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  transition: background var(--transition-fast);
+}
+
+.searchResult:hover {
+  background: var(--color-gray-100);
+}
+
+.searchResult img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.searchResultName {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-dark);
+}
+
+.searchResultPrice {
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.userMenu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-gray-700);
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.btnSair {
+  height: 38px;
+  padding: 0 1.25rem;
+  background: transparent;
+  color: var(--color-gray-700);
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btnSair:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.userMenu {
+  position: relative;
+}
+
+.userIconBtn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--color-gray-700);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.userIconBtn:hover {
+  background: var(--color-gray-100);
+  color: var(--color-primary);
+}
+
+.userDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card-hover);
+  min-width: 200px;
+  z-index: 200;
+  overflow: hidden;
+  animation: fadeInDown 0.15s ease;
+}
+
+.userDropdownHeader {
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.userDropdownName {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-dark);
+}
+
+.userDropdownEmail {
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+}
+
+.userDropdownDivider {
+  height: 1px;
+  background: var(--color-gray-200);
+}
+
+.userDropdownItem {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-700);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.userDropdownItem:hover {
+  background: var(--color-gray-100);
+  color: var(--color-primary);
+}
+
+.userDropdownLogout {
+  color: #D72638;
+}
+
+.userDropdownLogout:hover {
+  background: #FEF2F2 !important;
+  color: #D72638 !important;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
