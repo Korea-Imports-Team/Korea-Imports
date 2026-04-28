@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { products } from "../data/products";
 import logoImg from "../assets/logo.png";
+import ProductsDashboard from "./ProductsDashboard";
+import OrdersDashboard from "./OrdersDashboard";
 import "./Dashboard.css";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -121,11 +123,7 @@ export default function KoreaDashboard() {
       {/* ── SIDEBAR ── */}
       <aside className="kid-sb">
         <div className="kid-brand">
-          <div className="kid-av">K</div>
-          <div>
-            <div className="kid-bn">Korea Imports</div>
-            <div className="kid-br">Admin Panel</div>
-          </div>
+          <img src={logoImg} alt="Korea Imports" className="kid-logo" />
         </div>
 
         <nav className="kid-nav">
@@ -160,6 +158,12 @@ export default function KoreaDashboard() {
       {/* ── MAIN ── */}
       <main className="kid-main">
 
+        {activeNav === "Produtos" ? (
+          <ProductsDashboard />
+        ) : activeNav === "Pedidos" ? (
+          <OrdersDashboard />
+        ) : (
+          <>
         {/* Cabeçalho */}
         <div className="kid-ph a0">
           <div className="kid-pt">Dashboard</div>
@@ -192,9 +196,11 @@ export default function KoreaDashboard() {
                 ))}
               </select>
             </div>
-            <div className="kid-cv">{fmt(md.revenue)}</div>
-            <div className={`kid-cc ${diff >= 0 ? "pos" : "neg"}`}>
-              {diff >= 0 ? "+" : ""}{diff.toFixed(1)}% vs mês anterior
+            <div className="kid-cv-wrap">
+              <div className="kid-cv">{fmt(md.revenue)}</div>
+              <div className={`kid-cc ${diff >= 0 ? "pos" : "neg"}`}>
+                {diff >= 0 ? "+" : ""}{diff.toFixed(1)}% vs mês anterior
+              </div>
             </div>
           </div>
 
@@ -221,8 +227,10 @@ export default function KoreaDashboard() {
                 ))}
               </select>
             </div>
-            <div className="kid-cv">{fmt(getAnnualRevenue(annualM))}</div>
-            <div className="kid-cc">Últimos {annualM} meses</div>
+            <div className="kid-cv-wrap">
+              <div className="kid-cv">{fmt(getAnnualRevenue(annualM))}</div>
+              <div className="kid-cc">Últimos {annualM} meses</div>
+            </div>
           </div>
 
           {/* Estoque Total */}
@@ -236,8 +244,10 @@ export default function KoreaDashboard() {
                 </svg>
               </span>
             </div>
-            <div className="kid-cv">{totalStock}</div>
-            <div className="kid-cc">{products.length} produtos</div>
+            <div className="kid-cv-wrap">
+              <div className="kid-cv">{totalStock}</div>
+              <div className="kid-cc">{products.length} produtos</div>
+            </div>
           </div>
 
           {/* Total de Vendas */}
@@ -253,8 +263,10 @@ export default function KoreaDashboard() {
                 </svg>
               </span>
             </div>
-            <div className="kid-cv">{totalSold}</div>
-            <div className="kid-cc">Unidades vendidas</div>
+            <div className="kid-cv-wrap">
+              <div className="kid-cv">{totalSold}</div>
+              <div className="kid-cc">Unidades vendidas</div>
+            </div>
           </div>
 
         </div>
@@ -264,23 +276,23 @@ export default function KoreaDashboard() {
           <div className="kid-tc">
             <div className="kid-th">
               <span className="kid-tt">Produtos Mais Vendidos</span>
-              <span className="kid-bg">Top 3</span>
             </div>
             {bestSellers.map((p, i) => (
               <ProdRow key={p.id} rank={i + 1} product={p} />
             ))}
           </div>
 
-          <div className="kid-tc">
+          <div className="kid-tc worst">
             <div className="kid-th">
               <span className="kid-tt">Produtos Menos Vendidos</span>
-              <span className="kid-bg">Bottom 3</span>
             </div>
             {worstSellers.map((p, i) => (
               <ProdRow key={p.id} rank={i + 1} product={p} />
             ))}
           </div>
         </div>
+          </>
+        )}
 
       </main>
     </div>
