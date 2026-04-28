@@ -10,8 +10,7 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CheckoutPage from './pages/CheckoutPage';
-import PaymentPage from './pages/PaymentPage';
-import SuccessPage from './pages/SuccessPage';
+import Dashboard from "./pages/Dashboard";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -28,6 +27,7 @@ export default function App() {
         <CartProvider>
           <ScrollToTop />
           <Routes>
+            {/* Rotas da loja — com Header e Footer */}
             <Route element={<Layout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/catalogo" element={<CatalogoPage />} />
@@ -36,9 +36,10 @@ export default function App() {
               <Route path="/entrar" element={<LoginPage />} />
               <Route path="/cadastro" element={<RegisterPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/pagamento" element={<PaymentPage />} />
-              <Route path="/sucesso" element={<SuccessPage />} />
             </Route>
+
+            {/* Rota do admin — sem Header e sem Footer */}
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </CartProvider>
       </AuthProvider>
