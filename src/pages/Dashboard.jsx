@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { products } from "../data/products";
 import logoImg from "../assets/logo.png";
 import ProductsDashboard from "./ProductsDashboard";
 import OrdersDashboard from "./OrdersDashboard";
+import CuponsDashboard from "./CuponsDashboard";
 import "./Dashboard.css";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -110,6 +112,7 @@ function ProdRow({ rank, product }) {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function KoreaDashboard() {
+  const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState("Dashboard");
   const [selMonth, setSelMonth]   = useState(0);
   const [annualM, setAnnualM]     = useState(12);
@@ -143,7 +146,7 @@ export default function KoreaDashboard() {
         </nav>
 
         <div className="kid-foot">
-          <button className="kid-ni" style={{ color: "#6B7280" }}>
+          <button className="kid-ni" style={{ color: "#6B7280" }} onClick={() => navigate("/")}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="#6B7280" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
@@ -162,6 +165,8 @@ export default function KoreaDashboard() {
           <ProductsDashboard />
         ) : activeNav === "Pedidos" ? (
           <OrdersDashboard />
+        ) : activeNav === "Cupons" ? (
+          <CuponsDashboard />
         ) : (
           <>
         {/* Cabeçalho */}

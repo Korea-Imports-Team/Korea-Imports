@@ -1,33 +1,9 @@
 /* ============================================
-   CHECKOUT PAGE
+   SHIPPING PAGE
    ============================================ */
 
 .page {
     padding: 2rem 0 5rem;
-}
-
-.empty {
-    text-align: center;
-    padding: 5rem 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: center;
-    color: var(--color-gray-500);
-}
-
-.back {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    font-size: 0.875rem;
-    color: var(--color-gray-500);
-    margin-bottom: 1.5rem;
-    transition: color var(--transition-fast);
-}
-
-.back:hover {
-    color: var(--color-primary);
 }
 
 /* ── Stepper ── */
@@ -35,7 +11,6 @@
     display: flex;
     align-items: flex-start;
     margin-bottom: 2.5rem;
-    position: relative;
 }
 
 .stepperItem {
@@ -53,7 +28,7 @@
     height: 2px;
     background: var(--color-gray-200);
     margin: 0 8px;
-    margin-top: -28px; /* alinha com o centro do círculo */
+    margin-top: -28px;
     transition: background 0.3s;
 }
 
@@ -115,22 +90,17 @@
     color: var(--color-primary);
 }
 
+.stepLabelDone {
+    color: var(--color-primary);
+}
+
 .stepSub {
     font-size: 0.6875rem;
     color: var(--color-gray-400);
     white-space: nowrap;
 }
 
-/* ── Title ── */
-.title {
-    font-family: var(--font-display);
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--color-dark);
-    margin-bottom: 2rem;
-}
-
-/* Layout */
+/* ── Layout ── */
 .layout {
     display: grid;
     grid-template-columns: 1fr 380px;
@@ -138,82 +108,200 @@
     align-items: start;
 }
 
-/* Left col */
 .leftCol {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
 }
 
-/* Section */
+/* ── Section ── */
 .section {
     background: var(--color-white);
     border: 1.5px solid var(--color-gray-200);
     border-radius: var(--radius-md);
-    padding: 1.5rem;
+    padding: 1.75rem;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+}
+
+.sectionIcon {
+    color: var(--color-primary);
+    margin-top: 2px;
+    flex-shrink: 0;
 }
 
 .sectionTitle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
     font-family: var(--font-display);
-    font-size: 1rem;
+    font-size: 1.125rem;
     font-weight: 700;
     color: var(--color-dark);
-    margin-bottom: 1.25rem;
+    line-height: 1.3;
 }
 
-/* Form */
-.formGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+.sectionSub {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    margin-top: 2px;
 }
 
-.field {
+/* ── Options ── */
+.options {
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
 }
 
-.fullWidth {
-    grid-column: 1 / -1;
+.option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.125rem 1.25rem;
+    border: 1.5px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    text-align: left;
+    width: 100%;
+    font-family: var(--font-body);
 }
 
-.label {
-    font-size: 0.875rem;
+.option:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+}
+
+.optionSelected {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(19, 83, 167, 0.1);
+}
+
+.optionIconWrap {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    background: var(--color-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-500);
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+}
+
+.optionIconActive {
+    background: rgba(19, 83, 167, 0.12);
+    color: var(--color-primary);
+}
+
+.optionInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.optionLabel {
+    font-size: 0.9375rem;
     font-weight: 600;
     color: var(--color-dark);
 }
 
-.input {
-    height: 44px;
-    padding: 0 0.875rem;
+.optionSub {
+    font-size: 0.8125rem;
+    color: var(--color-gray-500);
+}
+
+.optionPrice {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--color-gray-700);
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+    transition: color 0.2s;
+}
+
+.optionPriceActive {
+    color: var(--color-primary);
+}
+
+/* Radio */
+.radio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--color-gray-300, #D1D5DB);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.2s;
+}
+
+.radioSelected {
+    border-color: var(--color-primary);
+}
+
+.radioDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-primary);
+}
+
+/* ── Action buttons ── */
+.actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-gray-200);
+}
+
+.btnBack {
+    flex: 1;
+    height: 50px;
+    background: transparent;
+    color: var(--color-gray-700);
     border: 1.5px solid var(--color-gray-200);
     border-radius: var(--radius-sm);
     font-family: var(--font-body);
     font-size: 0.9375rem;
-    color: var(--color-dark);
-    background: var(--color-white);
-    outline: none;
-    transition: border-color var(--transition-fast);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
 }
 
-.input:focus {
-    border-color: var(--color-primary);
+.btnBack:hover {
+    background: var(--color-gray-100);
+    border-color: var(--color-gray-400, #9CA3AF);
 }
 
-.input::placeholder {
-    color: var(--color-gray-400);
+.btnContinue {
+    flex: 2;
+    height: 50px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
 }
 
-.cepLoading {
-    font-size: 0.75rem;
-    color: var(--color-gray-400);
+.btnContinue:hover {
+    background: var(--color-primary-dark);
 }
 
-/* Right col */
+/* ── Right col — Summary ── */
 .rightCol {
     position: sticky;
     top: 100px;
@@ -238,7 +326,6 @@
     border-bottom: 1px solid var(--color-gray-200);
 }
 
-/* Items */
 .summaryItems {
     display: flex;
     flex-direction: column;
@@ -262,7 +349,7 @@
 .summaryItemInfo {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: 2px;
     flex: 1;
 }
 
@@ -272,7 +359,7 @@
     color: var(--color-dark);
 }
 
-.summaryItemSize {
+.summaryItemMeta {
     font-size: 0.75rem;
     color: var(--color-gray-500);
 }
@@ -289,14 +376,14 @@
     padding-top: 1rem;
 }
 
-.couponTitle {
+.couponLabel {
     display: flex;
     align-items: center;
     gap: 0.375rem;
     font-size: 0.875rem;
     font-weight: 700;
     color: var(--color-dark);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.625rem;
 }
 
 .couponRow {
@@ -314,7 +401,8 @@
     font-size: 0.875rem;
     color: var(--color-dark);
     outline: none;
-    transition: border-color var(--transition-fast);
+    transition: border-color 0.14s;
+    background: var(--color-white);
 }
 
 .couponInput:focus {
@@ -330,25 +418,19 @@
     height: 40px;
     padding: 0 1rem;
     background: var(--color-primary);
-    color: var(--color-white);
+    color: #fff;
+    border: none;
     border-radius: var(--radius-sm);
     font-family: var(--font-body);
     font-size: 0.875rem;
     font-weight: 600;
-    border: none;
     cursor: pointer;
-    transition: background var(--transition-fast);
+    transition: background 0.14s;
     white-space: nowrap;
 }
 
-.couponBtn:hover {
-    background: var(--color-primary-dark);
-}
-
-.couponBtn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+.couponBtn:hover { background: var(--color-primary-dark); }
+.couponBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .couponError {
     font-size: 0.8125rem;
@@ -363,7 +445,7 @@
     margin-top: 0.375rem;
 }
 
-/* Totals */
+/* Totais */
 .totals {
     border-top: 1px solid var(--color-gray-200);
     padding-top: 1rem;
@@ -384,11 +466,6 @@
     font-weight: 600;
 }
 
-.freeShipping {
-    color: #16A34A;
-    font-weight: 600;
-}
-
 .totalFinal {
     font-family: var(--font-display);
     font-weight: 800;
@@ -400,49 +477,4 @@
 
 .totalFinal span:last-child {
     color: var(--color-primary);
-}
-
-/* Submit */
-.submitBtn {
-    width: 100%;
-    height: 50px;
-    background: var(--color-primary);
-    color: var(--color-white);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-body);
-    font-size: 1rem;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: background var(--transition-fast);
-}
-
-.submitBtn:hover {
-    background: var(--color-primary-dark);
-}
-
-.inputError {
-    color: #e53935;
-    font-size: 0.8rem;
-    margin-top: 4px;
-    display: block;
-}
-
-.successMessage {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #4caf50;
-    color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-weight: 500;
-    z-index: 999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.inputDisabled {
-    background: #f0f2f5;
-    color: #555;
-    opacity: 0.9;
 }

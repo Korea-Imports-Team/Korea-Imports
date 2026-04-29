@@ -146,7 +146,7 @@ export default function ProductsDashboard() {
           </div>
         </div>
         <button className="pd-btn" onClick={() => setShowAdd(true)}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -272,6 +272,7 @@ export default function ProductsDashboard() {
       {showAdd && (
         <div className="pd-overlay" onClick={() => setShowAdd(false)}>
           <div className="pd-modal" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="pd-modal-close" onClick={() => setShowAdd(false)}>×</button>
             <div className="pd-modal-title">Adicionar Novo Produto</div>
             <form className="pd-form" onSubmit={handleSubmit}>
               <div className="pd-field">
@@ -383,6 +384,7 @@ export default function ProductsDashboard() {
       {editId !== null && (
         <div className="pd-overlay" onClick={() => setEditId(null)}>
           <div className="pd-modal" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="pd-modal-close" onClick={() => setEditId(null)}>×</button>
             <div className="pd-modal-title">Editar Produto</div>
             <form className="pd-form" onSubmit={handleEditSubmit}>
               <div className="pd-field">

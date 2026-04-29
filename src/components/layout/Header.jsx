@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, Search, X } from 'lucide-react';
+import { Heart, ShoppingCart, Search, X, Package } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useSearch } from '../../hooks/useProducts';
@@ -109,6 +109,7 @@ export default function Header() {
             )}
           </div>
 
+          {/* Favoritos */}
           <Link to="/favoritos" className={styles.actionBtn} aria-label="Favoritos">
             <Heart size={20} />
             {wishlistItems.length > 0 && (
@@ -116,6 +117,19 @@ export default function Header() {
             )}
           </Link>
 
+          {/* Meus Pedidos — só aparece se logado */}
+          {user && (
+            <Link
+              to="/meus-pedidos"
+              className={styles.actionBtn}
+              aria-label="Meus Pedidos"
+              title="Meus Pedidos"
+            >
+              <Package size={20} />
+            </Link>
+          )}
+
+          {/* Carrinho */}
           <Link to="/carrinho" className={styles.actionBtn} aria-label="Carrinho">
             <ShoppingCart size={20} />
             {cartCount > 0 && (
@@ -123,6 +137,7 @@ export default function Header() {
             )}
           </Link>
 
+          {/* Usuário */}
           {user ? (
             <div className={styles.userMenu}>
               <button
@@ -130,7 +145,8 @@ export default function Header() {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 aria-label="Menu do usuário"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -144,10 +160,18 @@ export default function Header() {
                     <span className={styles.userDropdownEmail}>{user.email}</span>
                   </div>
                   <div className={styles.userDropdownDivider} />
-                  <Link to="/pedidos" className={styles.userDropdownItem} onClick={() => setUserMenuOpen(false)}>
+                  <Link
+                    to="/meus-pedidos"
+                    className={styles.userDropdownItem}
+                    onClick={() => setUserMenuOpen(false)}
+                  >
                     Meus Pedidos
                   </Link>
-                  <Link to="/favoritos" className={styles.userDropdownItem} onClick={() => setUserMenuOpen(false)}>
+                  <Link
+                    to="/favoritos"
+                    className={styles.userDropdownItem}
+                    onClick={() => setUserMenuOpen(false)}
+                  >
                     Favoritos
                   </Link>
                   <div className={styles.userDropdownDivider} />
@@ -167,7 +191,6 @@ export default function Header() {
           )}
 
         </div>
-
       </div>
     </header>
   );

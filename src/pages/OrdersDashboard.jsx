@@ -19,7 +19,7 @@ const STATUS_CLASS = {
 
 const MOCK_ORDERS = [
   {
-    id: "#KR-0001",
+    id: "ORD-0001",
     customerName: "Lucas Ferreira",
     date: "2026-04-20",
     status: "delivered",
@@ -31,7 +31,7 @@ const MOCK_ORDERS = [
     ],
   },
   {
-    id: "#KR-0002",
+    id: "ORD-0002",
     customerName: "Mariana Costa",
     date: "2026-04-22",
     status: "shipped",
@@ -42,7 +42,7 @@ const MOCK_ORDERS = [
     ],
   },
   {
-    id: "#KR-0003",
+    id: "ORD-0003",
     customerName: "Rafael Souza",
     date: "2026-04-23",
     status: "processing",
@@ -53,7 +53,7 @@ const MOCK_ORDERS = [
     ],
   },
   {
-    id: "#KR-0004",
+    id: "ORD-0004",
     customerName: "Isabela Nunes",
     date: "2026-04-24",
     status: "in-transit",
@@ -65,7 +65,7 @@ const MOCK_ORDERS = [
     ],
   },
   {
-    id: "#KR-0005",
+    id: "ORD-0005",
     customerName: "Carlos Mendes",
     date: "2026-04-25",
     status: "pending",
@@ -76,7 +76,7 @@ const MOCK_ORDERS = [
     ],
   },
   {
-    id: "#KR-0006",
+    id: "ORD-0006",
     customerName: "Fernanda Lima",
     date: "2026-04-26",
     status: "pending",
