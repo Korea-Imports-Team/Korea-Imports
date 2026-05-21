@@ -1,20 +1,55 @@
 import { useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Truck, RefreshCw } from 'lucide-react';
+import { Heart, ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Truck, RefreshCw, Star } from 'lucide-react';
 import { products } from '../data/products';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import ReviewSystem from '../components/ReviewSystem';
 import styles from './ProductPage.module.css';
+
+// ─── Lê avaliações do produto ─────────────────────────────────────────────────
+function getProductReviews(productId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('reviews') || '{}');
+    return all[productId] || [];
+  } catch { return []; }
+}
+
+// ─── Mini display de estrelas ─────────────────────────────────────────────────
+function StarRow({ value, count, onClick }) {
+  return (
+    <button className={styles.starRow} onClick={onClick} title="Ver avaliações">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star
+          key={n}
+          size={16}
+          fill={value >= n ? '#F59E0B' : 'none'}
+          stroke={value >= n ? '#F59E0B' : '#D1D5DB'}
+          strokeWidth={1.5}
+        />
+      ))}
+      <span className={styles.starAvg}>{value > 0 ? value.toFixed(1) : '—'}</span>
+      <span className={styles.starCount}>
+        {count > 0 ? `(${count} avaliação${count !== 1 ? 'ões' : ''})` : 'Sem avaliações — seja o primeiro!'}
+      </span>
+    </button>
+  );
+}
 
 export default function ProductPage() {
   const { id } = useParams();
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
   const product = useMemo(() => products.find((p) => p.id === Number(id)), [id]);
+
   const [currentImage, setCurrentImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(null);
-  const [activeTab, setActiveTab] = useState('descricao');
-  const [error, setError] = useState('');
-  const [toast, setToast] = useState(false);
+  const [selectedSize, setSelectedSize]  = useState(null);
+  // ✅ 'avaliacoes' adicionado como terceira aba
+  const [activeTab, setActiveTab]        = useState('descricao');
+  const [error, setError]                = useState('');
+  const [toast, setToast]                = useState(false);
 
   if (!product) {
     return (
@@ -25,13 +60,29 @@ export default function ProductPage() {
     );
   }
 
-  const images = [product.image, ...(product.imageBack ? [product.imageBack] : [])];
+  // ─── Dados de avaliações ───────────────────────────────────────────────────
+  const reviews    = getProductReviews(product.id);
+  const reviewCount = reviews.length;
+  const reviewAvg  = reviewCount > 0
+    ? reviews.reduce((s, r) => s + r.rating, 0) / reviewCount
+    : 0;
+
+  // ─── Compra verificada ────────────────────────────────────────────────────
+  const hasPurchased = (() => {
+    try {
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      return orders.some((o) => o.cartItems?.some((item) => item.id === product.id));
+    } catch { return false; }
+  })();
+
+  const userName = user?.displayName || user?.email?.split('@')[0] || 'Anônimo';
+
+  const images   = [product.image, ...(product.imageBack ? [product.imageBack] : [])];
   const inWishlist = isInWishlist(product.id);
 
   function prevImage() {
     setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   }
-
   function nextImage() {
     setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   }
@@ -40,10 +91,7 @@ export default function ProductPage() {
     if (product.sizes && (!selectedSize || selectedSize === '')) {
       setError('Selecione um tamanho antes de continuar');
       setTimeout(() => {
-        document.querySelector('#sizes-error')?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
+        document.querySelector('#sizes-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 50);
       return;
     }
@@ -57,7 +105,25 @@ export default function ProductPage() {
     }
   }
 
+  // ✅ Rola até as tabs e abre aba de avaliações
+  function goToReviews() {
+    setActiveTab('avaliacoes');
+    setTimeout(() => {
+      document.querySelector('#tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
   const installment = (product.price / 3).toFixed(2).replace('.', ',');
+
+  // ✅ Definição das 3 tabs
+  const TABS = [
+    { id: 'descricao',  label: 'Descrição' },
+    { id: 'guia',       label: 'Guia de Tamanhos' },
+    {
+      id: 'avaliacoes',
+      label: reviewCount > 0 ? `Avaliações (${reviewCount})` : 'Avaliações',
+    },
+  ];
 
   return (
     <main className={styles.page}>
@@ -77,8 +143,8 @@ export default function ProductPage() {
                 className={styles.image}
               />
               <div className={styles.badges}>
-                {product.isNew && <span className={styles.badgeNew}>Novo</span>}
-                {product.discount && <span className={styles.badgeDiscount}>-{product.discount}%</span>}
+                {product.isNew      && <span className={styles.badgeNew}>Novo</span>}
+                {product.discount   && <span className={styles.badgeDiscount}>-{product.discount}%</span>}
               </div>
 
               <button
@@ -120,6 +186,9 @@ export default function ProductPage() {
           <div className={styles.infoCol}>
             <h1 className={styles.name}>{product.name}</h1>
 
+            {/* ✅ Nota média clicável — leva direto para aba de avaliações */}
+            <StarRow value={reviewAvg} count={reviewCount} onClick={goToReviews} />
+
             <div className={styles.priceBlock}>
               <span className={styles.price}>
                 R$ {product.price.toFixed(2).replace('.', ',')}
@@ -156,12 +225,7 @@ export default function ProductPage() {
                       <button
                         key={size}
                         className={`${styles.sizeBtn} ${selectedSize === size ? styles.sizeBtnActive : ''} ${outOfStock ? styles.sizeBtnDisabled : ''}`}
-                        onClick={() => {
-                          if (!outOfStock) {
-                            setSelectedSize(size);
-                            setError('');
-                          }
-                        }}
+                        onClick={() => { if (!outOfStock) { setSelectedSize(size); setError(''); } }}
                         disabled={outOfStock}
                         title={outOfStock ? 'Sem estoque' : ''}
                       >
@@ -170,30 +234,21 @@ export default function ProductPage() {
                     );
                   })}
                 </div>
-                {error && (
-                  <div id="sizes-error" className={styles.errorCard}>
-                    ⚠️ {error}
-                  </div>
-                )}
+                {error && <div id="sizes-error" className={styles.errorCard}>⚠️ {error}</div>}
               </div>
             )}
 
-            {/* Em estoque */}
             <p className={styles.inStock}>✓ Em estoque</p>
 
-            {/* Botões */}
             <div className={styles.actions}>
               <button className={styles.buyBtn} onClick={() => handleAddToCart(true)}>
-                <ShoppingCart size={18} />
-                Comprar
+                <ShoppingCart size={18} /> Comprar
               </button>
               <button className={styles.addBtn} onClick={() => handleAddToCart(false)}>
-                <ShoppingCart size={18} />
-                Adicionar ao Carrinho
+                <ShoppingCart size={18} /> Adicionar ao Carrinho
               </button>
             </div>
 
-            {/* Frete e Troca */}
             <div className={styles.infoCards}>
               <div className={styles.infoCard}>
                 <Truck size={20} className={styles.infoCardIcon} />
@@ -211,25 +266,36 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Tags */}
             <div className={styles.tags}>
               {product.tags.map((tag) => (
                 <span key={tag} className={styles.tag}>#{tag}</span>
               ))}
             </div>
+
+            {/* ✅ CTA de avaliação se comprou e não avaliou ainda */}
+            {hasPurchased && !reviews.some((r) => r.userName === userName) && (
+              <button className={styles.reviewCta} onClick={goToReviews}>
+                <Star size={15} fill="#F59E0B" stroke="#F59E0B" />
+                Você comprou este produto — deixe sua avaliação!
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* ✅ Tabs com 3 opções: Descrição | Guia | Avaliações */}
         <div className={styles.tabs} id="tabs">
           <div className={styles.tabsHeader}>
-            {['descricao', 'guia'].map((tab) => (
+            {TABS.map((tab) => (
               <button
-                key={tab}
-                className={`${styles.tabBtn} ${activeTab === tab ? styles.tabBtnActive : ''}`}
-                onClick={() => setActiveTab(tab)}
+                key={tab.id}
+                className={`${styles.tabBtn} ${activeTab === tab.id ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab(tab.id)}
               >
-                {tab === 'descricao' ? 'Descrição' : 'Guia de Tamanhos'}
+                {tab.label}
+                {/* Indicador visual na aba de avaliações */}
+                {tab.id === 'avaliacoes' && reviewCount > 0 && (
+                  <span className={styles.tabBadge}>{reviewAvg.toFixed(1)} ★</span>
+                )}
               </button>
             ))}
           </div>
@@ -245,9 +311,7 @@ export default function ProductPage() {
               <table className={styles.sizeTable}>
                 <thead>
                   <tr>
-                    <th>Tamanho</th>
-                    <th>Largura (cm)</th>
-                    <th>Comprimento (cm)</th>
+                    <th>Tamanho</th><th>Largura (cm)</th><th>Comprimento (cm)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -258,25 +322,21 @@ export default function ProductPage() {
                 </tbody>
               </table>
             )}
+
+            {/* ✅ Avaliações dentro da aba */}
+            {activeTab === 'avaliacoes' && (
+              <ReviewSystem
+                productId={product.id}
+                userName={userName}
+                hasPurchased={hasPurchased}
+              />
+            )}
           </div>
         </div>
+
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div className={styles.toast}>
-          ✓ Adicionado ao carrinho!
-        </div>
-      )}
+      {toast && <div className={styles.toast}>✓ Adicionado ao carrinho!</div>}
     </main>
   );
 }
-
-/**
- * ProductPage.jsx
- *
- * Página de detalhe de um produto individual.
- * Busca o produto pelo ID presente na URL (/produto/:id).
- *
- * Exibe: carrossel de imagens, tamanhos, frete, guia de tamanhos e descrição.
- */

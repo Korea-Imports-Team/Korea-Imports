@@ -53,7 +53,7 @@
     height: 2px;
     background: var(--color-gray-200);
     margin: 0 8px;
-    margin-top: -28px; /* alinha com o centro do círculo */
+    margin-top: -28px;
     transition: background 0.3s;
 }
 
@@ -127,8 +127,37 @@
     font-size: 1.75rem;
     font-weight: 800;
     color: var(--color-dark);
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
 }
+
+/* ── Address banner (endereço pré-preenchido) ── */
+.addressBanner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    color: #1e40af;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    font-weight: 500;
+}
+
+.addressBannerBtn {
+    font-weight: 700;
+    color: var(--color-primary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    text-decoration: underline;
+    padding: 0;
+}
+.addressBannerBtn:hover { color: var(--color-primary-dark); }
 
 /* Layout */
 .layout {

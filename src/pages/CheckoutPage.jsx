@@ -14,32 +14,68 @@ const STEPS = [
     { number: 4, label: 'Revisão',   sub: 'Confirmar pedido' },
 ];
 
+// ✅ Máscara de telefone
+function maskPhone(value) {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length === 0) return '';
+    if (digits.length <= 2)  return `(${digits}`;
+    if (digits.length <= 6)  return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function getDefaultAddress() {
+    try {
+        const addresses = JSON.parse(localStorage.getItem('savedAddresses') || '[]');
+        return addresses.find((a) => a.isDefault) || addresses[0] || null;
+    } catch { return null; }
+}
+
+function getProfile() {
+    try { return JSON.parse(localStorage.getItem('userProfile') || '{}'); }
+    catch { return {}; }
+}
+
 export default function CheckoutPage() {
     const { cartItems } = useCart();
     const { user }      = useAuth();
     const navigate      = useNavigate();
 
-    const [cepError, setCepError]         = useState('');
-    const [loadingCep, setLoadingCep]     = useState(false);
-    const [addressLocked, setAddressLocked] = useState(false);
-    const [couponInput, setCouponInput]   = useState('');
+    const defaultAddress = getDefaultAddress();
+    const profile        = getProfile();
+
+    const [cepError, setCepError]             = useState('');
+    const [loadingCep, setLoadingCep]         = useState(false);
+    const [addressLocked, setAddressLocked]   = useState(!!defaultAddress);
+    const [couponInput, setCouponInput]       = useState('');
     const [couponDiscount, setCouponDiscount] = useState(0);
-    const [couponError, setCouponError]   = useState('');
-    const [couponApplied, setCouponApplied] = useState('');
+    const [couponError, setCouponError]       = useState('');
+    const [couponApplied, setCouponApplied]   = useState('');
 
     const [form, setForm] = useState({
-        name: '', email: user?.email || '', phone: '',
-        cep: '', address: '', number: '', complement: '',
-        neighborhood: '', city: '', state: '',
+        name:         defaultAddress?.name         || profile.name  || '',
+        email:        user?.email                  || '',
+        phone:        defaultAddress?.phone        || profile.phone || '',
+        cep:          defaultAddress?.cep          || '',
+        address:      defaultAddress?.address      || '',
+        number:       defaultAddress?.number       || '',
+        complement:   defaultAddress?.complement   || '',
+        neighborhood: defaultAddress?.neighborhood || '',
+        city:         defaultAddress?.city         || '',
+        state:        defaultAddress?.state        || '',
     });
 
-    // ✅ Sem frete — é escolhido na próxima tela
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const discount = (subtotal * couponDiscount) / 100;
     const total    = subtotal - discount;
 
     function handleChange(e) {
         setForm({ ...form, [e.target.name]: e.target.value });
+    }
+
+    // ✅ Handler específico para telefone com máscara
+    function handlePhone(e) {
+        setForm((prev) => ({ ...prev, phone: maskPhone(e.target.value) }));
     }
 
     async function handleCep(e) {
@@ -56,8 +92,10 @@ export default function CheckoutPage() {
                 if (data.erro) { setCepError('CEP não encontrado 😕'); return; }
                 setForm((prev) => ({
                     ...prev,
-                    address: data.logradouro || '', neighborhood: data.bairro || '',
-                    city: data.localidade || '',    state: data.uf || '',
+                    address:      data.logradouro || '',
+                    neighborhood: data.bairro     || '',
+                    city:         data.localidade || '',
+                    state:        data.uf         || '',
                 }));
                 setAddressLocked(true);
             } catch { setCepError('Erro ao buscar CEP 😕'); }
@@ -110,7 +148,9 @@ export default function CheckoutPage() {
                         const isCompleted = step.number < 1;
                         return (
                             <div key={step.number} className={styles.stepperItem}>
-                                {idx > 0 && <div className={`${styles.stepLine} ${isCompleted ? styles.stepLineDone : ''}`} />}
+                                {idx > 0 && (
+                                    <div className={`${styles.stepLine} ${isCompleted ? styles.stepLineDone : ''}`} />
+                                )}
                                 <div className={styles.stepCircleWrap}>
                                     <div className={`${styles.stepCircle} ${isActive ? styles.stepActive : ''} ${isCompleted ? styles.stepDone : ''}`}>
                                         {step.number}
@@ -127,23 +167,50 @@ export default function CheckoutPage() {
 
                 <h1 className={styles.title}>Finalizar Compra</h1>
 
+                {defaultAddress && (
+                    <div className={styles.addressBanner}>
+                        <MapPin size={15} />
+                        Endereço padrão pré-preenchido.{' '}
+                        <button type="button" className={styles.addressBannerBtn} onClick={() => setAddressLocked(false)}>
+                            Editar
+                        </button>
+                        {' '}ou{' '}
+                        <Link to="/perfil" className={styles.addressBannerBtn}>
+                            Escolher outro endereço
+                        </Link>
+                    </div>
+                )}
+
                 <form className={styles.layout} onSubmit={handleSubmit}>
                     <div className={styles.leftCol}>
+
                         {/* Dados Pessoais */}
                         <div className={styles.section}>
                             <h2 className={styles.sectionTitle}><User size={18} />Dados Pessoais</h2>
                             <div className={styles.formGrid}>
                                 <div className={`${styles.field} ${styles.fullWidth}`}>
                                     <label className={styles.label}>Nome Completo *</label>
-                                    <input type="text" name="name" value={form.name} onChange={handleChange} className={styles.input} required />
+                                    <input type="text" name="name" value={form.name}
+                                        onChange={handleChange} className={styles.input} required />
                                 </div>
                                 <div className={styles.field}>
                                     <label className={styles.label}>E-mail *</label>
-                                    <input type="email" name="email" value={form.email} onChange={handleChange} className={styles.input} required />
+                                    <input type="email" name="email" value={form.email}
+                                        onChange={handleChange} className={styles.input} required />
                                 </div>
                                 <div className={styles.field}>
                                     <label className={styles.label}>Telefone</label>
-                                    <input type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="(11) 99999-9999" className={styles.input} />
+                                    {/* ✅ Campo com máscara */}
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        value={form.phone}
+                                        onChange={handlePhone}
+                                        placeholder="(11) 99999-9999"
+                                        className={styles.input}
+                                        maxLength={15}
+                                        inputMode="numeric"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -154,33 +221,44 @@ export default function CheckoutPage() {
                             <div className={styles.formGrid}>
                                 <div className={styles.field}>
                                     <label className={styles.label}>CEP *</label>
-                                    <input type="text" name="cep" value={form.cep} onChange={handleCep} placeholder="00000-000" className={styles.input} maxLength={9} required />
+                                    <input type="text" name="cep" value={form.cep} onChange={handleCep}
+                                        placeholder="00000-000" className={styles.input} maxLength={9} required />
                                     {cepError   && <span className={styles.inputError}>{cepError}</span>}
                                     {loadingCep && <span className={styles.cepLoading}>Buscando...</span>}
                                 </div>
                                 <div className={`${styles.field} ${styles.fullWidth}`}>
                                     <label className={styles.label}>Endereço *</label>
-                                    <input type="text" name="address" value={form.address} onChange={handleChange} className={`${styles.input} ${addressLocked ? styles.inputDisabled : ''}`} required disabled={addressLocked} />
+                                    <input type="text" name="address" value={form.address} onChange={handleChange}
+                                        className={`${styles.input} ${addressLocked ? styles.inputDisabled : ''}`}
+                                        required disabled={addressLocked} />
                                 </div>
                                 <div className={styles.field}>
                                     <label className={styles.label}>Número *</label>
-                                    <input type="text" name="number" value={form.number} onChange={handleChange} className={styles.input} required />
+                                    <input type="text" name="number" value={form.number}
+                                        onChange={handleChange} className={styles.input} required />
                                 </div>
                                 <div className={styles.field}>
                                     <label className={styles.label}>Complemento</label>
-                                    <input type="text" name="complement" value={form.complement} onChange={handleChange} placeholder="Apto, bloco..." className={styles.input} />
+                                    <input type="text" name="complement" value={form.complement}
+                                        onChange={handleChange} placeholder="Apto, bloco..." className={styles.input} />
                                 </div>
                                 <div className={styles.field}>
                                     <label className={styles.label}>Bairro *</label>
-                                    <input type="text" name="neighborhood" value={form.neighborhood} onChange={handleChange} className={`${styles.input} ${addressLocked ? styles.inputDisabled : ''}`} required disabled={addressLocked} />
+                                    <input type="text" name="neighborhood" value={form.neighborhood} onChange={handleChange}
+                                        className={`${styles.input} ${addressLocked ? styles.inputDisabled : ''}`}
+                                        required disabled={addressLocked} />
                                 </div>
                                 <div className={styles.field}>
                                     <label className={styles.label}>Cidade *</label>
-                                    <input type="text" name="city" value={form.city} onChange={handleChange} className={`${styles.input} ${addressLocked ? styles.inputDisabled : ''}`} required disabled={addressLocked} />
+                                    <input type="text" name="city" value={form.city} onChange={handleChange}
+                                        className={`${styles.input} ${addressLocked ? styles.inputDisabled : ''}`}
+                                        required disabled={addressLocked} />
                                 </div>
                                 <div className={styles.field}>
                                     <label className={styles.label}>Estado *</label>
-                                    <input type="text" name="state" value={form.state} onChange={handleChange} className={`${styles.input} ${addressLocked ? styles.inputDisabled : ''}`} maxLength={2} required disabled={addressLocked} />
+                                    <input type="text" name="state" value={form.state} onChange={handleChange}
+                                        className={`${styles.input} ${addressLocked ? styles.inputDisabled : ''}`}
+                                        maxLength={2} required disabled={addressLocked} />
                                 </div>
                             </div>
                         </div>
@@ -211,8 +289,10 @@ export default function CheckoutPage() {
                                 <h3 className={styles.couponTitle}><Tag size={15} />Cupom de Desconto</h3>
                                 <div className={styles.couponRow}>
                                     <input type="text" placeholder="Digite o cupom" value={couponInput}
-                                        onChange={(e) => setCouponInput(e.target.value)} className={styles.couponInput} disabled={!!couponApplied} />
-                                    <button type="button" className={styles.couponBtn} onClick={handleApplyCoupon} disabled={!!couponApplied}>Aplicar</button>
+                                        onChange={(e) => setCouponInput(e.target.value)}
+                                        className={styles.couponInput} disabled={!!couponApplied} />
+                                    <button type="button" className={styles.couponBtn}
+                                        onClick={handleApplyCoupon} disabled={!!couponApplied}>Aplicar</button>
                                 </div>
                                 {couponError   && <p className={styles.couponError}>{couponError}</p>}
                                 {couponApplied && <p className={styles.couponSuccess}>✓ Cupom {couponApplied} aplicado! -{couponDiscount}%</p>}

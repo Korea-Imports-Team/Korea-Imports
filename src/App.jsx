@@ -11,6 +11,8 @@ import ProductPage      from './pages/ProductPage';
 import CartPage         from './pages/CartPage';
 import LoginPage        from './pages/LoginPage';
 import RegisterPage     from './pages/RegisterPage';
+import WishlistPage     from './pages/WishlistPage';
+import ProfilePage      from './pages/ProfilePage';
 import CheckoutPage     from './pages/CheckoutPage';
 import ShippingPage     from './pages/ShippingPage';
 import PaymentPage      from './pages/PaymentPage';
@@ -18,6 +20,7 @@ import ReviewPage       from './pages/ReviewPage';
 import ConfirmationPage from './pages/ConfirmationPage';
 import OrdersPage       from './pages/OrdersPage';
 import Dashboard        from './pages/Dashboard';
+import ReviewTestPage   from './pages/ReviewTestPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -35,7 +38,7 @@ export default function App() {
           <ScrollToTop />
           <Routes>
 
-            {/* ── Com navbar e footer ── */}
+            {/* Com navbar e footer */}
             <Route element={<Layout />}>
               <Route path="/"            element={<HomePage />} />
               <Route path="/catalogo"    element={<CatalogoPage />} />
@@ -43,26 +46,22 @@ export default function App() {
               <Route path="/carrinho"    element={<CartPage />} />
               <Route path="/entrar"      element={<LoginPage />} />
               <Route path="/cadastro"    element={<RegisterPage />} />
+              <Route path="/favoritos"   element={<WishlistPage />} />
+              <Route path="/test-review"  element={<ReviewTestPage />} />
 
-              {/* Meus pedidos: com navbar, só para logados */}
-              <Route
-                path="/meus-pedidos"
-                element={
-                  <ProtectedRoute>
-                    <OrdersPage />
-                  </ProtectedRoute>
-                }
-              />
+              {/* Protegidas com navbar */}
+              <Route path="/meus-pedidos" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+              <Route path="/perfil"       element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             </Route>
 
-            {/* ── Fluxo de checkout: sem navbar, só para logados ── */}
-            <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
-            <Route path="/frete"    element={<ProtectedRoute><ShippingPage /></ProtectedRoute>} />
-            <Route path="/pagamento" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
-            <Route path="/revisao"  element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
+            {/* Checkout sem navbar, protegidas */}
+            <Route path="/checkout"    element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+            <Route path="/frete"       element={<ProtectedRoute><ShippingPage /></ProtectedRoute>} />
+            <Route path="/pagamento"   element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
+            <Route path="/revisao"     element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
             <Route path="/confirmacao" element={<ProtectedRoute><ConfirmationPage /></ProtectedRoute>} />
 
-            {/* ── Admin: sem navbar ── */}
+            {/* Admin sem navbar */}
             <Route path="/dashboard" element={<Dashboard />} />
 
           </Routes>

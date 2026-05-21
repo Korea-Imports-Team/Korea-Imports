@@ -499,6 +499,80 @@
   animation: fadeInUp 0.3s ease;
 }
 
+/* ── Adicione estas classes NO FINAL do seu ProductPage.module.css ── */
+
+/* Linha de estrelas clicável abaixo do nome */
+.starRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-body);
+}
+
+.starRow:hover .starAvg,
+.starRow:hover .starCount {
+  color: var(--color-primary);
+}
+
+.starAvg {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-left: 4px;
+  transition: color 0.14s;
+}
+
+.starCount {
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
+  margin-left: 2px;
+  text-decoration: underline;
+  transition: color 0.14s;
+}
+
+/* Badge de nota na aba */
+.tabBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #b45309;
+  background: #fef9c3;
+  border-radius: 20px;
+  padding: 1px 7px;
+  vertical-align: middle;
+}
+
+/* CTA para quem comprou e não avaliou */
+.reviewCta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #b45309;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 0.14s;
+}
+
+.reviewCta:hover {
+  background: #fef9c3;
+}
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateX(-50%) translateY(12px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
