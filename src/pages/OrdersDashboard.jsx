@@ -154,9 +154,11 @@ function StatusBadge({ orderId, status, onChange }) {
 
 /* ── Main ── */
 export default function OrdersDashboard() {
-  const [orders, setOrders]       = useState(MOCK_ORDERS);
-  const [search, setSearch]       = useState("");
-  const [viewOrder, setViewOrder] = useState(null);
+  const [orders, setOrders]           = useState(MOCK_ORDERS);
+  const [search, setSearch]           = useState("");
+  const [viewOrder, setViewOrder]     = useState(null);
+  const [trackingInput, setTrackingInput] = useState("");
+  const [trackingSaved, setTrackingSaved] = useState(false);
 
   const filtered = orders.filter(
     (o) =>
@@ -168,6 +170,44 @@ export default function OrdersDashboard() {
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
     );
+  }
+
+  function openModal(order) {
+    setViewOrder(order);
+    setTrackingInput(order.shippingInfo.trackingCode || "");
+    setTrackingSaved(false);
+  }
+
+  function saveTrackingCode() {
+    if (!viewOrder) return;
+    const code = trackingInput.trim().toUpperCase();
+
+    // Update local orders state
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === viewOrder.id
+          ? { ...o, shippingInfo: { ...o.shippingInfo, trackingCode: code || null } }
+          : o
+      )
+    );
+    setViewOrder((prev) => ({
+      ...prev,
+      shippingInfo: { ...prev.shippingInfo, trackingCode: code || null },
+    }));
+
+    // Persist to localStorage so OrdersPage can read it
+    try {
+      const stored = JSON.parse(localStorage.getItem("order_tracking_codes") || "{}");
+      if (code) {
+        stored[viewOrder.id] = code;
+      } else {
+        delete stored[viewOrder.id];
+      }
+      localStorage.setItem("order_tracking_codes", JSON.stringify(stored));
+    } catch (_) {}
+
+    setTrackingSaved(true);
+    setTimeout(() => setTrackingSaved(false), 2500);
   }
 
   return (
@@ -239,7 +279,7 @@ export default function OrdersDashboard() {
                     <button
                       className="od-icon-btn"
                       title="Ver detalhes"
-                      onClick={() => setViewOrder(order)}
+                      onClick={() => openModal(order)}
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -278,8 +318,38 @@ export default function OrdersDashboard() {
               <div className="od-info-sub">
                 {viewOrder.shippingInfo.city} - {viewOrder.shippingInfo.state} - CEP {viewOrder.shippingInfo.cep}
               </div>
+            </div>
+
+            {/* Código de rastreamento */}
+            <div className="od-section">
+              <div className="od-section-title">Código de Rastreamento</div>
+              <div className="od-tracking-row">
+                <input
+                  className="od-tracking-input"
+                  type="text"
+                  placeholder="Ex: AA123456789BR"
+                  value={trackingInput}
+                  onChange={(e) => { setTrackingInput(e.target.value); setTrackingSaved(false); }}
+                  maxLength={13}
+                />
+                <button className="od-tracking-save-btn" onClick={saveTrackingCode}>
+                  Salvar
+                </button>
+              </div>
+              {trackingSaved && (
+                <div className="od-tracking-feedback">
+                  ✓ Código salvo — o cliente já pode ver
+                </div>
+              )}
               {viewOrder.shippingInfo.trackingCode && (
-                <div className="od-info-sub">Rastreio: {viewOrder.shippingInfo.trackingCode}</div>
+                <a
+                  href={`https://rastreamento.correios.com.br/app/index.php?objetos=${viewOrder.shippingInfo.trackingCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="od-tracking-link"
+                >
+                  Rastrear no site dos Correios ↗
+                </a>
               )}
             </div>
 

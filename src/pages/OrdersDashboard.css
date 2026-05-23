@@ -419,3 +419,79 @@
   margin-right: 18px !important;
   margin-top: 10px !important;
 }
+
+/* ── Tracking code ── */
+.od-tracking-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.od-tracking-input {
+  flex: 1;
+  height: 38px;
+  padding: 0 12px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0D0D0D;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color 0.14s, box-shadow 0.14s;
+}
+
+.od-tracking-input::placeholder {
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #9CA3AF;
+  text-transform: none;
+}
+
+.od-tracking-input:focus {
+  border-color: #1353a7;
+  box-shadow: 0 0 0 3px rgba(19, 83, 167, 0.08);
+}
+
+.od-tracking-save-btn {
+  height: 38px;
+  padding: 0 18px;
+  background: #1353a7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.14s;
+  white-space: nowrap;
+}
+
+.od-tracking-save-btn:hover {
+  background: #063c81;
+}
+
+.od-tracking-feedback {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.od-tracking-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1353a7;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.od-tracking-link:hover {
+  color: #063c81;
+}
