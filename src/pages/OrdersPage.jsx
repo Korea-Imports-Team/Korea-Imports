@@ -170,7 +170,34 @@ function OrderCard({ order }) {
                     {/* Rastreamento */}
                     <div className={styles.orderSection}>
                         <h4 className={styles.orderSectionTitle}>Rastreamento</h4>
-                        <TrackingTimeline steps={order.tracking || []} />
+                        {(() => {
+                            let code = null;
+                            try {
+                                const codes = JSON.parse(localStorage.getItem('order_tracking_codes') || '{}');
+                                code = codes[order.id] || null;
+                            } catch (_) {}
+                            return code ? (
+                                <div className={styles.trackingBox}>
+                                    <div className={styles.trackingCodeRow}>
+                                        <span className={styles.trackingCodeLabel}>Código dos Correios</span>
+                                        <code className={styles.trackingCode}>{code}</code>
+                                    </div>
+                                    <a
+                                        href={`https://rastreamento.correios.com.br/app/index.php?objetos=${code}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={styles.trackingBtn}
+                                    >
+                                        Rastrear nos Correios ↗
+                                    </a>
+                                    <p className={styles.trackingHint}>
+                                        Você também pode inserir o código acima nos apps Correios, 17track ou Melhor Rastreio.
+                                    </p>
+                                </div>
+                            ) : (
+                                <TrackingTimeline steps={order.tracking || []} />
+                            );
+                        })()}
                     </div>
                 </div>
             )}
