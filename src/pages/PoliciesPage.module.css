@@ -1,0 +1,433 @@
+/* ============================================================
+   POLICIES PAGE — FAQ, Trocas e Devoluções, Privacidade
+   ============================================================ */
+
+.page {
+  padding: 3rem 0 6rem;
+  background: var(--color-white);
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--color-dark);
+  letter-spacing: -0.5px;
+  margin-bottom: 0.625rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--color-gray-500);
+  max-width: 540px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ── Tab nav ── */
+.tabNav {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--color-gray-200);
+  margin-bottom: 2.5rem;
+  overflow-x: auto;
+  padding-bottom: 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tabNav::-webkit-scrollbar {
+  display: none;
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.375rem;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-gray-500);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.tabBtn:hover {
+  color: var(--color-primary);
+  background: #f0f6ff;
+}
+
+.tabBtnActive {
+  color: var(--color-primary) !important;
+  border-bottom-color: var(--color-primary) !important;
+  background: none;
+}
+
+/* ── Section wrapper ── */
+.section {
+  max-width: 800px;
+  margin: 0 auto;
+  animation: fadeInUp 0.2s ease;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Section header ── */
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.sectionIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-bottom: 0.25rem;
+}
+
+.sectionSub {
+  font-size: 0.875rem;
+  color: var(--color-gray-500);
+}
+
+/* ── Highlight card ── */
+.highlightCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #fef9c3;
+  border: 1.5px solid #fde68a;
+  border-radius: var(--radius-md);
+  padding: 1.125rem 1.375rem;
+  margin-bottom: 1.75rem;
+}
+
+.highlightEmoji {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.highlightTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 0.25rem;
+}
+
+.highlightText {
+  font-size: 0.875rem;
+  color: #b45309;
+  line-height: 1.6;
+}
+
+/* ── FAQ list ── */
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.faqItem {
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.faqItem:hover {
+  border-color: #bfdbfe;
+}
+
+.faqOpen {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(19, 83, 167, 0.06);
+}
+
+.faqBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: var(--color-white);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 1rem;
+  transition: background 0.12s;
+}
+
+.faqBtn:hover {
+  background: #f8faff;
+}
+
+.faqOpen .faqBtn {
+  background: #eff6ff;
+}
+
+.faqQ {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-dark);
+  line-height: 1.5;
+}
+
+.faqIcon {
+  display: flex;
+  align-items: center;
+  color: var(--color-gray-400);
+  flex-shrink: 0;
+  transition: transform 0.2s, color 0.15s;
+}
+
+.faqIconOpen {
+  transform: rotate(180deg);
+  color: var(--color-primary);
+}
+
+.faqAnswer {
+  padding: 0 1.25rem 1.125rem;
+  background: #f8faff;
+  border-top: 1px solid #dbeafe;
+  animation: slideDown 0.18s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.faqAnswer p {
+  font-size: 0.9rem;
+  color: var(--color-gray-700);
+  line-height: 1.75;
+  padding-top: 0.875rem;
+}
+
+/* ── Accordion list (Trocas / Privacidade) ── */
+.accordionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.accordionItem {
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.accordionItem:hover {
+  border-color: #bfdbfe;
+}
+
+.accordionOpen {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(19, 83, 167, 0.06);
+}
+
+.accordionBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: var(--color-white);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 1rem;
+  transition: background 0.12s;
+  color: var(--color-gray-500);
+}
+
+.accordionBtn:hover {
+  background: #f8faff;
+  color: var(--color-primary);
+}
+
+.accordionOpen .accordionBtn {
+  background: #eff6ff;
+  color: var(--color-primary);
+}
+
+.accordionTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-dark);
+  line-height: 1.5;
+}
+
+.accordionContent {
+  padding: 0 1.25rem 1.125rem;
+  background: #f8faff;
+  border-top: 1px solid #dbeafe;
+  animation: slideDown 0.18s ease;
+}
+
+.accordionContent p {
+  font-size: 0.9rem;
+  color: var(--color-gray-700);
+  line-height: 1.75;
+  padding-top: 0.875rem;
+}
+
+/* ── Contact card ── */
+.contactCard {
+  background: var(--color-gray-100);
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.contactTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-bottom: 0.375rem;
+}
+
+.contactSub {
+  font-size: 0.875rem;
+  color: var(--color-gray-500);
+  margin-bottom: 1.25rem;
+}
+
+.contactBtns {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btnWhatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6875rem 1.25rem;
+  background: #22c55e;
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.btnWhatsapp:hover {
+  background: #16a34a;
+}
+
+.btnEmail {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6875rem 1.25rem;
+  background: var(--color-white);
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.btnEmail:hover {
+  background: var(--color-primary-light);
+}
+
+/* ── LGPD card ── */
+.lgpdCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+  color: var(--color-primary);
+}
+
+.lgpdTitle {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 0.375rem;
+}
+
+.lgpdText {
+  font-size: 0.875rem;
+  color: #3b82f6;
+  line-height: 1.65;
+}
+
+.lgpdLink {
+  color: #1e40af;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.lgpdLink:hover {
+  color: var(--color-primary);
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .title {
+    font-size: 1.625rem;
+  }
+
+  .tabBtn {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.25rem;
+  }
+
+  .contactBtns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btnWhatsapp,
+  .btnEmail {
+    justify-content: center;
+  }
+}
