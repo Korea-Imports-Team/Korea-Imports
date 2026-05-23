@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../../services/firebase';
+import { auth } from '../services/firebase';
 import styles from './CtaBanner.module.css';
 
 export default function CtaBanner() {

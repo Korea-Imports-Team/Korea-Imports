@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import ProductCard from '../ui/ProductCard';
+import ProductCard from './ProductCard';
 import styles from './ProductSection.module.css';
 
 export default function ProductSection({ title, subtitle, products, linkTo = '/catalogo', linkLabel = 'Ver Todos' }) {

@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { products } from '../data/products';
-import HeroBanner from '../components/sections/HeroBanner';
-import FeaturesSection from '../components/sections/FeaturesSection';
-import ProductSection from '../components/sections/ProductSection';
-import CtaBanner from '../components/sections/CtaBanner';
-import WelcomeModal from '../components/ui/WelcomeModal';
+import HeroBanner from '../components/HeroBanner';
+import FeaturesSection from '../components/FeaturesSection';
+import ProductSection from '../components/ProductSection';
+import CtaBanner from '../components/CtaBanner';
+import WelcomeModal from '../components/WelcomeModal';
 
 export default function HomePage() {
   const newProducts = useMemo(() => products.filter((p) => p.isNew).slice(0, 3), []);

@@ -1,5 +1,5 @@
 import { TrendingUp, Sparkles, Tag } from 'lucide-react';
-import { features } from '../../data/products';
+import { features } from '../data/products';
 import styles from './FeaturesSection.module.css';
 
 const iconMap = {

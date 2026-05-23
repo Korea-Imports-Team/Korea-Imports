@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { products, categories } from '../data/products';
-import ProductCard from '../components/ui/ProductCard';
+import ProductCard from '../components/ProductCard';
 import styles from './CatalogPage.module.css';
 
 const SIZES = ['P', 'M', 'G', 'GG'];

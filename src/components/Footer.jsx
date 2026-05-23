@@ -35,9 +35,10 @@ export default function Footer() {
         <div className={styles.col}>
           <h4 className={styles.colTitle}>Atendimento</h4>
           <ul className={styles.colLinks}>
-            <li><Link to="/rastrear">Rastrear Pedido</Link></li>
-            <li><Link to="/trocas">Trocas e Devoluções</Link></li>
-            <li><Link to="/faq">Perguntas Frequentes</Link></li>
+            
+              <li><Link to="/politicas">Trocas e Devoluções</Link></li>
+            <li><Link to="/politicas">Perguntas Frequentes</Link></li>
+            <li><Link to="/politicas">Privacidade</Link></li>
           </ul>
         </div>
 

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, Search, X, Package } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
-import { useSearch } from '../../hooks/useProducts';
-import { categories } from '../../data/products';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useSearch } from '../hooks/useProducts';
+import { categories } from '../data/products';
 import styles from './Header.module.css';
 
 export default function Header() {

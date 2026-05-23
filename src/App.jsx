@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
-import Layout from './components/layout/Layout';
+import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import HomePage         from './pages/HomePage';
@@ -21,6 +21,7 @@ import ConfirmationPage from './pages/ConfirmationPage';
 import OrdersPage       from './pages/OrdersPage';
 import Dashboard        from './pages/Dashboard';
 import ReviewTestPage   from './pages/ReviewTestPage';
+import PoliciesPage     from './pages/PolicePages';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -48,6 +49,7 @@ export default function App() {
               <Route path="/cadastro"    element={<RegisterPage />} />
               <Route path="/favoritos"   element={<WishlistPage />} />
               <Route path="/test-review"  element={<ReviewTestPage />} />
+              <Route path="/politicas"    element={<PoliciesPage />} />
 
               {/* Protegidas com navbar */}
               <Route path="/meus-pedidos" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
