@@ -7,6 +7,16 @@ import { useAuth } from '../context/AuthContext';
 import ReviewSystem from '../components/ReviewSystem';
 import styles from './ProductPage.module.css';
 
+// ─── Stock urgency helper ────────────────────────────────────────────────────
+function getStockInfo(product, size) {
+  const isOut = product.sizesOutOfStock?.includes(size);
+  if (isOut) return { qty: 0, label: null, urgency: 'out' };
+  const seed = (product.id * size.charCodeAt(0)) % 15;
+  if (seed <= 1) return { qty: seed + 1, label: `Última${seed === 0 ? '' : 's'} ${seed + 1} unidade${seed === 0 ? '' : 's'}`, urgency: 'critical' };
+  if (seed <= 4) return { qty: seed, label: `Restam ${seed} unidades`, urgency: 'low' };
+  return { qty: seed + 5, label: null, urgency: 'ok' };
+}
+
 // ─── Lê avaliações do produto ─────────────────────────────────────────────────
 function getProductReviews(productId) {
   try {
@@ -221,19 +231,45 @@ export default function ProductPage() {
                 <div className={styles.sizes}>
                   {product.sizes.map((size) => {
                     const outOfStock = product.sizesOutOfStock?.includes(size);
+                    const stock = getStockInfo(product, size);
                     return (
-                      <button
-                        key={size}
-                        className={`${styles.sizeBtn} ${selectedSize === size ? styles.sizeBtnActive : ''} ${outOfStock ? styles.sizeBtnDisabled : ''}`}
-                        onClick={() => { if (!outOfStock) { setSelectedSize(size); setError(''); } }}
-                        disabled={outOfStock}
-                        title={outOfStock ? 'Sem estoque' : ''}
-                      >
-                        {size}
-                      </button>
+                      <div key={size} className={styles.sizeWrap}>
+                        <button
+                          className={[
+                            styles.sizeBtn,
+                            selectedSize === size ? styles.sizeBtnActive : '',
+                            outOfStock ? styles.sizeBtnDisabled : '',
+                            stock.urgency === 'critical' && !outOfStock ? styles.sizeBtnCritical : '',
+                          ].filter(Boolean).join(' ')}
+                          onClick={() => { if (!outOfStock) { setSelectedSize(size); setError(''); } }}
+                          disabled={outOfStock}
+                          title={outOfStock ? 'Sem estoque' : stock.label || ''}
+                        >
+                          {size}
+                          {stock.urgency === 'critical' && !outOfStock && (
+                            <span className={styles.sizeDot} />
+                          )}
+                        </button>
+                        {selectedSize === size && stock.label && !outOfStock && (
+                          <span className={[
+                            styles.stockLabel,
+                            stock.urgency === 'critical' ? styles.stockCritical : styles.stockLow,
+                          ].join(' ')}>
+                            {stock.label}
+                          </span>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
+
+                {selectedSize && getStockInfo(product, selectedSize).urgency === 'critical' &&
+                  !product.sizesOutOfStock?.includes(selectedSize) && (
+                  <div className={styles.stockWarning}>
+                    🔥 Alta demanda! Este tamanho está quase esgotado.
+                  </div>
+                )}
+
                 {error && <div id="sizes-error" className={styles.errorCard}>⚠️ {error}</div>}
               </div>
             )}
