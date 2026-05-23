@@ -522,3 +522,163 @@
   gap: 10px;
   margin-top: 20px;
 }
+
+/* ── Outline button (Relatório de Estoque) ── */
+.pd .pd-btn-outline {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: #fff;
+  color: #1353a7;
+  border: 1.5px solid #1353a7;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.14s;
+  white-space: nowrap;
+}
+
+.pd .pd-btn-outline:hover {
+  background: #eff6ff;
+}
+
+/* ── Modal subtitle ── */
+.pd-modal-sub {
+  font-size: 12.5px;
+  color: #6B7280;
+  margin-top: -8px;
+  margin-bottom: 18px;
+}
+
+/* ── Threshold row ── */
+.pd-threshold-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.pd-threshold-input {
+  width: 80px !important;
+  text-align: center;
+}
+
+.pd-threshold-unit {
+  font-size: 13px;
+  color: #6B7280;
+}
+
+/* ── Stock report modal size ── */
+.pd-stock-report-modal {
+  width: 560px !important;
+  max-height: 85vh !important;
+}
+
+/* ── All-ok message ── */
+.pd-stock-ok-msg {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #dcfce7;
+  border: 1.5px solid #86efac;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #166534;
+}
+
+/* ── Low stock alert banner ── */
+.pd-stock-alert-banner {
+  padding: 10px 14px;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #b45309;
+  margin-bottom: 12px;
+}
+
+/* ── Stock list ── */
+.pd-stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pd-stock-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.pd-stock-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #F3F4F6;
+  flex-shrink: 0;
+}
+
+.pd-stock-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pd-stock-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0D0D0D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pd-stock-sizes {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+.pd-stock-size-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.pd-stock-size-tag.out {
+  background: #fee2e2;
+  color: #dc2626;
+  text-decoration: line-through;
+}
+
+.pd-stock-qty {
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.pd-stock-out {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.pd-stock-low {
+  background: #fffbeb;
+  color: #b45309;
+}

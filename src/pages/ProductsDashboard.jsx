@@ -29,6 +29,8 @@ export default function ProductsDashboard() {
   const [formData, setFormData]       = useState(EMPTY_FORM);
   const [editId, setEditId]           = useState(null);
   const [editForm, setEditForm]       = useState(EMPTY_FORM);
+  const [showStockReport, setShowStockReport] = useState(false);
+  const [stockThreshold, setStockThreshold]   = useState(10);
 
   const filtered = productList.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -145,13 +147,25 @@ export default function ProductsDashboard() {
             {productList.length} produto{productList.length !== 1 ? "s" : ""} cadastrado{productList.length !== 1 ? "s" : ""}
           </div>
         </div>
-        <button className="pd-btn" onClick={() => setShowAdd(true)}>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            className="pd-btn-outline"
+            onClick={() => setShowStockReport(true)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 20V10M12 20V4M6 20v-6" />
+            </svg>
+            Relatório de Estoque
+          </button>
+          <button className="pd-btn" onClick={() => setShowAdd(true)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Adicionar Produto
         </button>
+        </div>
       </div>
 
       {/* ── Search ── */}
@@ -504,6 +518,81 @@ export default function ProductsDashboard() {
               <button className="pd-btn-ghost" onClick={() => setDeleteId(null)}>Cancelar</button>
               <button className="pd-btn-danger" onClick={() => handleDelete(deleteId)}>Remover</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Stock Report Modal ── */}
+      {showStockReport && (
+        <div className="pd-overlay" onClick={() => setShowStockReport(false)}>
+          <div className="pd-modal pd-stock-report-modal" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="pd-modal-close" onClick={() => setShowStockReport(false)}>×</button>
+            <div className="pd-modal-title">Relatório de Estoque</div>
+            <p className="pd-modal-sub">Produtos abaixo do limite mínimo de unidades</p>
+
+            <div className="pd-threshold-row">
+              <label className="pd-label" htmlFor="pd-threshold">Alertar abaixo de</label>
+              <input
+                id="pd-threshold"
+                className="pd-input pd-threshold-input"
+                type="number"
+                min="1"
+                max="200"
+                value={stockThreshold}
+                onChange={(e) => setStockThreshold(Number(e.target.value) || 1)}
+              />
+              <span className="pd-threshold-unit">unidades</span>
+            </div>
+
+            {(() => {
+              const lowStock = productList
+                .map((p) => ({ ...p, stock: stockCount(p) }))
+                .filter((p) => p.stock < stockThreshold)
+                .sort((a, b) => a.stock - b.stock);
+
+              if (lowStock.length === 0) {
+                return (
+                  <div className="pd-stock-ok-msg">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                      stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span>Todos os produtos têm estoque acima de {stockThreshold} unidades.</span>
+                  </div>
+                );
+              }
+              return (
+                <div className="pd-stock-list">
+                  <div className="pd-stock-alert-banner">
+                    ⚠️ {lowStock.length} produto{lowStock.length !== 1 ? "s" : ""} com estoque crítico
+                  </div>
+                  {lowStock.map((p) => (
+                    <div key={p.id} className="pd-stock-row">
+                      <img
+                        className="pd-stock-img"
+                        src={p.image}
+                        alt={p.name}
+                        onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
+                      />
+                      <div className="pd-stock-info">
+                        <div className="pd-stock-name">{p.name}</div>
+                        <div className="pd-stock-sizes">
+                          {p.sizes?.map((s) => (
+                            <span key={s} className={`pd-stock-size-tag ${p.sizesOutOfStock?.includes(s) ? "out" : ""}`}>
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className={`pd-stock-qty ${p.stock <= 0 ? "pd-stock-out" : "pd-stock-low"}`}>
+                        {p.stock <= 0 ? "Esgotado" : `${p.stock} un.`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
