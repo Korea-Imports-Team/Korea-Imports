@@ -250,6 +250,7 @@
   object-fit: cover;
   border-radius: 8px;
   margin-top: 8px;
+  margin-left: 15px;
   border: 1px solid #E5E7EB;
 }
 
@@ -375,7 +376,7 @@
   font-size: 12px;
   font-weight: 600;
   color: #374151;
-  margin-top: 10px !important;
+  margin-top: 5px !important;
   margin-left: 18px !important;
 }
 
@@ -549,8 +550,8 @@
 .pd-modal-sub {
   font-size: 12.5px;
   color: #6B7280;
-  margin-top: -8px;
-  margin-bottom: 18px;
+  margin-top: 15px !important;
+  margin-left: 15px !important;
 }
 
 /* ── Threshold row ── */
@@ -558,6 +559,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-left: 10px !important;
+  margin-right: 10px !important;
   margin-bottom: 20px;
 }
 
@@ -583,6 +586,9 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
+  margin-bottom: 10px !important;
+  margin-left: 10px !important;
+  margin-right: 10px !important;
   background: #dcfce7;
   border: 1.5px solid #86efac;
   border-radius: 10px;
@@ -681,4 +687,287 @@
 .pd-stock-low {
   background: #fffbeb;
   color: #b45309;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Adicione estas classes no FINAL do ProductsDashboard.css
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Alertas inline no topo ── */
+.pd .pd-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.pd .pd-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.pd .pd-alert-danger {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.pd .pd-alert-warning {
+  background: #fff7ed;
+  color: #92400e;
+  border: 1px solid #fed7aa;
+}
+
+.pd .pd-alert-link {
+  margin-left: auto;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  padding: 0;
+}
+
+/* ── Threshold inline no header ── */
+.pd .pd-threshold-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.pd .pd-threshold-inline-label {
+  font-size: 12px;
+  color: #6B7280;
+  white-space: nowrap;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pd .pd-threshold-input {
+  width: 52px !important;
+  padding: 3px 6px !important;
+  height: 28px !important;
+  font-size: 13px !important;
+  text-align: center;
+}
+
+/* ── Linhas coloridas na tabela ── */
+.pd .pd-row-out td { background: #fff5f5; }
+.pd .pd-row-low td { background: #fffbeb; }
+
+/* ── Tags de estoque por tamanho na tabela ── */
+.pd .pd-size-stock-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pd .pd-size-stock-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pd .pd-size-stock-tag.ok  { background: #dcfce7; color: #16a34a; }
+.pd .pd-size-stock-tag.low { background: #fef9c3; color: #b45309; }
+.pd .pd-size-stock-tag.out { background: #fee2e2; color: #dc2626; }
+
+/* ── Editor de estoque por tamanho no modal ── */
+.pd-stock-editor {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 14px;
+  margin-left: 10px !important;
+  margin-right: 10px !important;
+  margin-top: 10px !important;
+}
+
+.pd-stock-size-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.pd-stock-size-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.pd-stock-size-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pd-stock-qty-input {
+  width: 64px !important;
+  padding: 5px 6px !important;
+  text-align: center;
+  font-size: 13px !important;
+}
+
+.pd-stock-total {
+  margin-top: 15px !important;
+  margin-left: 15px !important;
+  font-size: 12.5px;
+  color: #6B7280;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pd-stock-total strong {
+  color: #1353a7;
+}
+
+/* ── Relatório modal ── */
+.pd .pd-stock-report-modal {
+  width: 560px;
+}
+
+.pd .pd-modal-sub {
+  font-size: 13px;
+  color: #6B7280;
+  margin-top: -12px;
+  margin-bottom: 16px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pd .pd-threshold-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+}
+
+.pd .pd-threshold-unit {
+  font-size: 13px;
+  color: #6B7280;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pd .pd-stock-ok-msg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  color: #16a34a;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pd .pd-stock-alert-banner {
+  padding: 10px 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  margin-left: 10px !important;
+  margin-right: 10px !important;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pd .pd-stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.pd .pd-stock-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-left: 10px !important;
+  margin-right: 10px !important;
+  margin-bottom: 10px !important;
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+}
+
+.pd .pd-stock-img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #F3F4F6;
+  flex-shrink: 0;
+}
+
+.pd .pd-stock-info { flex: 1; min-width: 0; }
+
+.pd .pd-stock-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0D0D0D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pd .pd-stock-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.pd .pd-stock-qty {
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ── Botão outline ── */
+.pd .pd-btn-outline {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  color: #1353a7;
+  border: 1.5px solid #1353a7;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.14s;
+}
+
+.pd .pd-btn-outline:hover {
+  background: #eff6ff;
 }
