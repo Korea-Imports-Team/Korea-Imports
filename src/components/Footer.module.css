@@ -6,10 +6,15 @@
 
 .footerGrid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  grid-template-columns: 1.8fr 1fr 1fr 1fr;
   gap: 3rem;
-  padding-top: 3rem;
-  padding-bottom: 3rem;
+  padding: 3rem 0;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .brandLogo {
@@ -20,19 +25,9 @@
   margin-bottom: 0.875rem;
 }
 
-.logoMark {
-  width: 36px;
-  height: 36px;
-  background-color: var(--color-primary);
-  color: var(--color-white);
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1rem;
-  flex-shrink: 0;
+.brandLogo img {
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .brandName {
@@ -45,13 +40,6 @@
   text-align: center;
 }
 
-.brandSub {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--color-gray-500);
-  text-align: center;
-}
-
 .brandDesc {
   font-size: 0.875rem;
   color: var(--color-gray-500);
@@ -59,35 +47,54 @@
   max-width: 220px;
 }
 
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .colTitle {
   font-family: var(--font-display);
-  font-size: 0.9375rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--color-black);
-  margin-bottom: 1rem;
+  margin-bottom: 0.65rem;
 }
 
 .colLinks {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.75rem;
 }
 
-.colLinks a {
-  font-size: 0.875rem;
+.colLinks li {
+  list-style: none;
+}
+
+.colLinks a,
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.9rem;
   color: var(--color-gray-500);
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
   transition: color var(--transition-fast);
+  cursor: pointer;
 }
 
-.colLinks a:hover {
+.colLinks a:hover,
+.linkBtn:hover {
   color: var(--color-primary);
 }
 
 .email {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  font-size: 0.875rem;
+  gap: 0.5rem;
+  font-size: 0.9rem;
   color: var(--color-gray-500);
   margin-bottom: 1rem;
   transition: color var(--transition-fast);
@@ -99,15 +106,15 @@
 
 .socials {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .social {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border: 1.5px solid var(--color-gray-200);
-  border-radius: var(--radius-sm);
-  display: flex;
+  border-radius: 12px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--color-gray-500);
@@ -119,13 +126,41 @@
   color: var(--color-primary);
 }
 
+.socialWhatsapp:hover {
+  border-color: #25d366;
+  color: #25d366;
+}
+
 .bottom {
   border-top: 1px solid var(--color-gray-200);
-  padding: 1.25rem 0;
+  padding: 1.2rem 0;
   text-align: center;
 }
 
 .bottom p {
-  font-size: 0.8125rem;
+  font-size: 0.82rem;
   color: var(--color-gray-400);
+}
+
+@media (max-width: 950px) {
+  .footerGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .footerGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .brandLogo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .brandDesc {
+    max-width: 100%;
+  }
 }
