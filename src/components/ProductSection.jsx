@@ -3,9 +3,9 @@ import { ArrowRight } from 'lucide-react';
 import ProductCard from './ProductCard';
 import styles from './ProductSection.module.css';
 
-export default function ProductSection({ title, subtitle, products, linkTo = '/catalogo', linkLabel = 'Ver Todos' }) {
+export default function ProductSection({ id, title, subtitle, products, linkTo = '/catalogo', linkLabel = 'Ver Todos' }) {
   return (
-    <section className={styles.section}>
+    <section id={id} className={styles.section}>
       <div className="container">
         <div className={styles.header}>
           <div>
