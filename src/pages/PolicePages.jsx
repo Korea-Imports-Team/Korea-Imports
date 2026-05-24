@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, RefreshCw, Shield, HelpCircle } from 'lucide-react';
 import styles from './PoliciesPage.module.css';
 
@@ -146,6 +146,19 @@ function FaqItem({ item, index }) {
 export default function PoliciesPage() {
   const [activeTab, setActiveTab] = useState('faq');
 
+  // Handle hash navigation
+  useEffect(() => {
+    const hash = window.location.hash.substring(1); // Remove #
+    
+    if (hash === 'faq') {
+      setActiveTab('faq');
+    } else if (hash === 'trocas-e-devolucoes') {
+      setActiveTab('troca');
+    } else if (hash === 'privacidade') {
+      setActiveTab('privacidade');
+    }
+  }, []);
+
   const TABS = [
     { id: 'faq',       label: 'Perguntas Frequentes', icon: HelpCircle },
     { id: 'troca',     label: 'Trocas e Devoluções',  icon: RefreshCw  },
@@ -183,7 +196,7 @@ export default function PoliciesPage() {
 
         {/* FAQ */}
         {activeTab === 'faq' && (
-          <div className={styles.section}>
+          <div id="faq" className={styles.section}>
             <div className={styles.sectionHeader}>
               <HelpCircle size={22} className={styles.sectionIcon} />
               <div>
@@ -223,7 +236,7 @@ export default function PoliciesPage() {
 
         {/* Trocas e Devoluções */}
         {activeTab === 'troca' && (
-          <div className={styles.section}>
+          <div id="trocas-e-devolucoes" className={styles.section}>
             <div className={styles.sectionHeader}>
               <RefreshCw size={22} className={styles.sectionIcon} />
               <div>
@@ -269,7 +282,7 @@ export default function PoliciesPage() {
 
         {/* Privacidade */}
         {activeTab === 'privacidade' && (
-          <div className={styles.section}>
+          <div id="privacidade" className={styles.section}>
             <div className={styles.sectionHeader}>
               <Shield size={22} className={styles.sectionIcon} />
               <div>
