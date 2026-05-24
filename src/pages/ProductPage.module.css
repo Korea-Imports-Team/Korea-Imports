@@ -222,6 +222,12 @@
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
+  width: 52px;
+  min-height: 82px;
+}
+
+.stockLabel {
+  min-height: 20px;
 }
 
 .sizeBtn {
