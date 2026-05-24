@@ -23,6 +23,53 @@ const SHIPPING_LABELS = {
     expressa:  'Expressa (2–3 dias)',
 };
 
+const MOCK_ORDERS = [
+    {
+        id: 'ORD-2026-0001',
+        createdAt: '2026-05-23T10:15:00.000Z',
+        status: 'em_transito',
+        subtotal: 159.9,
+        shippingPrice: 20,
+        discount: 0,
+        total: 179.9,
+        paymentMethod: 'pix',
+        shippingOption: 'padrao',
+        form: {
+            name: 'Ana Maria',
+            address: 'Rua das Laranjeiras, 112',
+            number: '112',
+            complement: 'Apto 45',
+            neighborhood: 'Jardim Botânico',
+            city: 'Rio de Janeiro',
+            state: 'RJ',
+            cep: '22470-030',
+        },
+        shippingInfo: {
+            city: 'Rio de Janeiro',
+            state: 'RJ',
+            address: 'Rua das Laranjeiras, 112',
+            cep: '22470-030',
+            trackingCode: 'BR20260523001',
+        },
+        cartItems: [
+            {
+                name: 'Camiseta Oversized Azul',
+                image: '/src/assets/Camiseta Oversized Azul.jpeg',
+                selectedSize: 'M',
+                quantity: 1,
+                price: 129.9,
+            },
+            {
+                name: 'Shorts Liso Brooksfield',
+                image: '/src/assets/Shorts Liso Brooksfield.jpeg',
+                selectedSize: null,
+                quantity: 1,
+                price: 30,
+            },
+        ],
+    },
+];
+
 function TrackingTimeline({ steps = [] }) {
     return (
         <div className={styles.timeline}>
@@ -174,8 +221,10 @@ function OrderCard({ order }) {
                             let code = null;
                             try {
                                 const codes = JSON.parse(localStorage.getItem('order_tracking_codes') || '{}');
-                                code = codes[order.id] || null;
-                            } catch (_) {}
+                                code = codes[order.id] || order.shippingInfo?.trackingCode || null;
+                            } catch (_) {
+                                code = order.shippingInfo?.trackingCode || null;
+                            }
                             return code ? (
                                 <div className={styles.trackingBox}>
                                     <div className={styles.trackingCodeRow}>
@@ -206,12 +255,23 @@ function OrderCard({ order }) {
 }
 
 export default function OrdersPage() {
-    // ✅ Lê pedidos reais do localStorage
+    // ✅ Lê pedidos reais do localStorage. Se não houver pedido em trânsito, inclui o mock para testes.
     const orders = (() => {
         try {
-            return JSON.parse(localStorage.getItem('orders') || '[]');
+            const stored = JSON.parse(localStorage.getItem('orders') || '[]');
+            if (stored.length === 0) {
+                return MOCK_ORDERS;
+            }
+            const hasInTransit = stored.some((order) => order.status === 'em_transito');
+            if (hasInTransit) {
+                return stored;
+            }
+            const additionalMocks = MOCK_ORDERS.filter(
+                (mockOrder) => !stored.some((order) => order.id === mockOrder.id)
+            );
+            return [...stored, ...additionalMocks];
         } catch {
-            return [];
+            return MOCK_ORDERS;
         }
     })();
 
