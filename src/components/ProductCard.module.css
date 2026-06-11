@@ -35,8 +35,8 @@
 
 .badges {
   position: absolute;
-  top: 0.625rem;
-  left: 0.625rem;
+  top: 0.5rem;
+  left: 0.5rem;
   display: flex;
   flex-direction: row;
   gap: 0.25rem;
@@ -47,7 +47,7 @@
   padding: 0.2rem 0.5rem;
   background: var(--color-dark);
   color: var(--color-white);
-  font-size: 0.6875rem;
+  font-size: 0.6rem;
   font-weight: 700;
   border-radius: var(--radius-sm);
 }
@@ -57,17 +57,17 @@
   padding: 0.2rem 0.5rem;
   background: #D72638;
   color: var(--color-white);
-  font-size: 0.6875rem;
+  font-size: 0.6rem;
   font-weight: 700;
   border-radius: var(--radius-sm);
 }
 
 .wishlistBtn {
   position: absolute;
-  top: 0.625rem;
-  right: 0.625rem;
-  width: 32px;
-  height: 32px;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
   background: var(--color-white);
   border-radius: var(--radius-full);
   display: flex;
@@ -88,16 +88,16 @@
 }
 
 .info {
-  padding: 0.875rem;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.3rem;
   flex: 1;
 }
 
 .name {
   font-family: var(--font-body);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-dark);
   line-height: 1.3;
@@ -112,7 +112,7 @@
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--color-gray-700);
   font-weight: 500;
 }
@@ -130,25 +130,25 @@
 
 .price {
   font-family: var(--font-display);
-  font-size: 1.0625rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--color-dark);
 }
 
 .originalPrice {
-  font-size: 0.8125rem;
+  font-size: 0.7rem;
   color: #D72638;
   text-decoration: line-through;
 }
 
 .addBtn {
   width: 100%;
-  height: 38px;
+  height: 32px;
   background: var(--color-primary);
   color: var(--color-white);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -167,12 +167,12 @@
   display: flex;
   gap: 0.375rem;
   margin-top: 0.5rem;
-  padding: 0 0.875rem;
+  padding: 0 0.75rem;
 }
 
 .colorDot {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 1.5px solid var(--color-gray-200);
   cursor: pointer;
@@ -187,7 +187,7 @@
 }
 
 .pix {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: #0a8a5a;
   font-weight: 600;
 }
@@ -206,6 +206,108 @@
   white-space: nowrap;
   z-index: 999;
   animation: fadeInUp 0.3s ease;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .badges {
+    top: 0.625rem;
+    left: 0.625rem;
+  }
+
+  .badgeNew,
+  .badgeDiscount {
+    font-size: 0.6875rem;
+  }
+
+  .wishlistBtn {
+    top: 0.625rem;
+    right: 0.625rem;
+    width: 32px;
+    height: 32px;
+  }
+
+  .info {
+    padding: 0.875rem;
+    gap: 0.375rem;
+  }
+
+  .name {
+    font-size: 0.875rem;
+  }
+
+  .rating {
+    font-size: 0.8125rem;
+  }
+
+  .price {
+    font-size: 1rem;
+  }
+
+  .originalPrice {
+    font-size: 0.8125rem;
+  }
+
+  .addBtn {
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .colorDot {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .badges {
+    top: 0.625rem;
+    left: 0.625rem;
+  }
+
+  .badgeNew,
+  .badgeDiscount {
+    font-size: 0.6875rem;
+  }
+
+  .wishlistBtn {
+    top: 0.625rem;
+    right: 0.625rem;
+    width: 32px;
+    height: 32px;
+  }
+
+  .info {
+    padding: 0.875rem;
+    gap: 0.375rem;
+  }
+
+  .name {
+    font-size: 0.9375rem;
+  }
+
+  .rating {
+    font-size: 0.8125rem;
+  }
+
+  .price {
+    font-size: 1.0625rem;
+  }
+
+  .originalPrice {
+    font-size: 0.8125rem;
+  }
+
+  .addBtn {
+    height: 38px;
+    font-size: 12px;
+  }
+
+  .colorDot {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 @keyframes fadeInUp {
