@@ -1,32 +1,8 @@
 import { useState, useRef } from 'react';
 import { Star, Camera, X, ThumbsUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { api, ApiError } from '../services/api';
 import styles from './ReviewSystem.module.css';
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-function getReviews(productId) {
-    try {
-        const all = JSON.parse(localStorage.getItem('reviews') || '{}');
-        return all[productId] || [];
-    } catch { return []; }
-}
-
-function saveReview(productId, review) {
-    try {
-        const all = JSON.parse(localStorage.getItem('reviews') || '{}');
-        all[productId] = [review, ...(all[productId] || [])];
-        localStorage.setItem('reviews', JSON.stringify(all));
-    } catch { /* silent */ }
-}
-
-function likeReview(productId, reviewId) {
-    try {
-        const all = JSON.parse(localStorage.getItem('reviews') || '{}');
-        all[productId] = (all[productId] || []).map((r) =>
-            r.id === reviewId ? { ...r, likes: (r.likes || 0) + 1 } : r
-        );
-        localStorage.setItem('reviews', JSON.stringify(all));
-    } catch { /* silent */ }
-}
 
 function ratingLabel(r) {
     return ['', 'Péssimo', 'Ruim', 'Regular', 'Bom', 'Excelente'][r] || '';
@@ -119,19 +95,15 @@ function ReviewForm({ productId, userName, onSubmit, onCancel }) {
         if (body.trim().length < 10) { setError('Escreva pelo menos 10 caracteres.'); return; }
 
         setSubmitting(true);
-        const review = {
-            id: Date.now().toString(),
-            productId,
-            userName: userName || 'Anônimo',
+        api.post(`/products/${productId}/reviews`, {
             rating,
-            title: title.trim(),
-            body: body.trim(),
-            photos,
-            likes: 0,
-            createdAt: new Date().toISOString(),
-        };
-        saveReview(productId, review);
-        setTimeout(() => { setSubmitting(false); onSubmit(review); }, 600);
+            comment: body.trim(),
+        })
+            .then((saved) => onSubmit(saved))
+            .catch((err) => {
+                setError(err instanceof ApiError ? err.message : 'Erro ao enviar avaliação.');
+                setSubmitting(false);
+            });
     }
 
     return (
@@ -230,7 +202,6 @@ function ReviewCard({ review, productId, onLike }) {
     function handleLike() {
         if (liked) return;
         setLiked(true);
-        likeReview(productId, review.id);
         onLike(review.id);
     }
 
@@ -308,10 +279,17 @@ function ReviewCard({ review, productId, onLike }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 // userName vazio = não logado | qualquer string = logado e pode avaliar
 export default function ReviewSystem({ productId, userName }) {
-    const [reviews, setReviews]       = useState(() => getReviews(productId));
+    const [reviews, setReviews]       = useState([]);
     const [showForm, setShowForm]     = useState(false);
     const [sortBy, setSortBy]         = useState('recent');
     const [filterStar, setFilterStar] = useState(0);
+
+    useEffect(() => {
+        if (!productId) return;
+        api.get(`/products/${productId}/reviews`, { auth: false })
+            .then(setReviews)
+            .catch(() => {}); // silencioso — produto sem review é normal
+    }, [productId]);
 
     const isLoggedIn      = !!userName && userName !== 'Anônimo';
     const alreadyReviewed = reviews.some((r) => r.userName === userName);
@@ -334,7 +312,7 @@ export default function ReviewSystem({ productId, userName }) {
             return 0;
         });
 
-    function handleSubmit(review) {
+    function handleNewReview(review) {
         setReviews((prev) => [review, ...prev]);
         setShowForm(false);
     }
@@ -378,7 +356,7 @@ export default function ReviewSystem({ productId, userName }) {
                 <ReviewForm
                     productId={productId}
                     userName={userName}
-                    onSubmit={handleSubmit}
+                    onSubmit={handleNewReview}
                     onCancel={() => setShowForm(false)}
                 />
             )}
