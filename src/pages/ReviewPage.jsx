@@ -2,30 +2,30 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, Truck, CreditCard } from 'lucide-react';
 import styles from './ReviewPage.module.css';
+import { api, ApiError } from '../services/api';
 
 const STEPS = [
-    { number: 1, label: 'Endereço',  sub: 'Dados de entrega' },
-    { number: 2, label: 'Frete',     sub: 'Método de envio' },
+    { number: 1, label: 'Endereço', sub: 'Dados de entrega' },
+    { number: 2, label: 'Frete', sub: 'Método de envio' },
     { number: 3, label: 'Pagamento', sub: 'Forma de pagamento' },
-    { number: 4, label: 'Revisão',   sub: 'Confirmar pedido' },
+    { number: 4, label: 'Revisão', sub: 'Confirmar pedido' },
 ];
 
 const CURRENT_STEP = 4;
 
-const VALID_COUPONS = { 'BEMVINDO10': 10, 'KOREA15': 15 };
 const fmt = (n) => `R$ ${n.toFixed(2).replace('.', ',')}`;
 
 const SHIPPING_LABELS = {
     economica: 'Econômica (10 a 15 dias)',
-    padrao:    'Padrão (5 a 7 dias)',
-    expressa:  'Expressa (2 a 3 dias)',
+    padrao: 'Padrão (5 a 7 dias)',
+    expressa: 'Expressa (2 a 3 dias)',
 };
 
 const PAYMENT_LABELS = {
     credito: 'Cartão de Crédito',
-    debito:  'Cartão de Débito',
-    pix:     'Pix',
-    boleto:  'Boleto Bancário',
+    debito: 'Cartão de Débito',
+    pix: 'Pix',
+    boleto: 'Boleto Bancário',
 };
 
 export default function ReviewPage() {
@@ -43,23 +43,25 @@ export default function ReviewPage() {
         cardName,
     } = state;
 
-    const [couponInput, setCouponInput]       = useState('');
-    const [couponApplied, setCouponApplied]   = useState(state.couponApplied || '');
+    const [couponInput, setCouponInput] = useState('');
+    const [couponApplied, setCouponApplied] = useState(state.couponApplied || '');
     const [couponDiscount, setCouponDiscount] = useState(state.couponDiscount || 0);
-    const [couponError, setCouponError]       = useState('');
-    const [loading, setLoading]               = useState(false);
+    const [couponError, setCouponError] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const discountAmt = (subtotal * couponDiscount) / 100;
-    const total       = subtotal + shippingPrice - discountAmt;
+    const total = subtotal + shippingPrice - discountAmt;
 
-    function handleApplyCoupon() {
+    async function handleApplyCoupon() {
         const code = couponInput.trim().toUpperCase();
-        if (VALID_COUPONS[code]) {
-            setCouponDiscount(VALID_COUPONS[code]);
+        if (!code) return;
+        try {
+            const result = await api.post('/coupons/validate', { code, subtotal }, { auth: false });
+            setCouponDiscount(result.discountPercentage ?? result.discountAmount ?? 0);
             setCouponApplied(code);
             setCouponError('');
-        } else {
-            setCouponError('Cupom inválido ou expirado.');
+        } catch (err) {
+            setCouponError(err instanceof ApiError ? err.message : 'Cupom inválido ou expirado.');
             setCouponDiscount(0);
             setCouponApplied('');
         }
@@ -69,23 +71,52 @@ export default function ReviewPage() {
         navigate('/pagamento', { state });
     }
 
-    function handleFinish() {
+    async function handleFinish() {
         setLoading(true);
-        const orderId = `KI-${Date.now().toString().slice(-8)}`;
-        setTimeout(() => {
+
+        const shippingMethodMap = { economica: 'ECONOMICA', padrao: 'PADRAO', expressa: 'EXPRESSA' };
+        const paymentMethodMap = { credito: 'CREDIT', debito: 'DEBIT', pix: 'PIX', boleto: 'BOLETO' };
+
+        const body = {
+            items: cartItems.map((item) => ({
+                productId: item.id,
+                size: item.selectedSize || null,
+                quantity: item.quantity,
+            })),
+            shippingOption: shippingMethodMap[shippingOption] || shippingOption.toUpperCase(),
+            paymentMethod: paymentMethodMap[paymentMethod] || paymentMethod.toUpperCase(),
+            shippingAddress: {
+                name: form.name,
+                street: form.address,
+                number: form.number,
+                complement: form.complement || null,
+                neighborhood: form.neighborhood,
+                city: form.city,
+                state: form.state,
+                cep: form.cep,
+            },
+            couponCode: couponApplied || null,
+        };
+
+        try {
+            const order = await api.post('/orders', body);
             navigate('/confirmacao', {
                 state: {
                     ...state,
-                    orderId,
+                    orderId: order.id,
                     couponApplied,
                     couponDiscount,
-                    discount: discountAmt,
-                    total,
+                    discount: Number(order.discount),
+                    total: Number(order.total),
                     paymentMethod,
-                    createdAt: new Date().toISOString(),
+                    createdAt: order.createdAt,
                 },
             });
-        }, 1200);
+        } catch (err) {
+            const msg = err instanceof ApiError ? err.message : 'Erro ao finalizar pedido. Tente novamente.';
+            alert(msg);
+            setLoading(false);
+        }
     }
 
     return (
@@ -95,7 +126,7 @@ export default function ReviewPage() {
                 {/* Stepper */}
                 <div className={styles.stepper}>
                     {STEPS.map((step, idx) => {
-                        const isActive    = step.number === CURRENT_STEP;
+                        const isActive = step.number === CURRENT_STEP;
                         const isCompleted = step.number < CURRENT_STEP;
                         return (
                             <div key={step.number} className={styles.stepperItem}>
@@ -137,8 +168,8 @@ export default function ReviewPage() {
                                 </div>
                                 <button className={styles.editBtn} onClick={() => navigate('/checkout', { state })}>
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                                     </svg>
                                     Editar
                                 </button>
@@ -160,8 +191,8 @@ export default function ReviewPage() {
                                 </div>
                                 <button className={styles.editBtn} onClick={() => navigate('/frete', { state })}>
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                                     </svg>
                                     Editar
                                 </button>
@@ -181,8 +212,8 @@ export default function ReviewPage() {
                                 </div>
                                 <button className={styles.editBtn} onClick={() => navigate('/pagamento', { state })}>
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                                     </svg>
                                     Editar
                                 </button>
@@ -242,8 +273,8 @@ export default function ReviewPage() {
                             <div className={styles.couponSection}>
                                 <p className={styles.couponLabel}>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
-                                        <line x1="7" y1="7" x2="7.01" y2="7"/>
+                                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+                                        <line x1="7" y1="7" x2="7.01" y2="7" />
                                     </svg>
                                     Cupom de Desconto
                                 </p>
@@ -259,7 +290,7 @@ export default function ReviewPage() {
                                         Aplicar
                                     </button>
                                 </div>
-                                {couponError   && <p className={styles.couponError}>{couponError}</p>}
+                                {couponError && <p className={styles.couponError}>{couponError}</p>}
                                 {couponApplied && <p className={styles.couponSuccess}>✓ Cupom {couponApplied} aplicado! -{couponDiscount}%</p>}
                             </div>
                         </div>
