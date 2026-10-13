@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { products } from '../data/products';
+import { useProductsData } from '../context/ProductsContext';
 import HeroBanner from '../components/HeroBanner';
 import FeaturesSection from '../components/FeaturesSection';
 import ProductSection from '../components/ProductSection';
@@ -9,9 +9,23 @@ import WelcomeModal from '../components/WelcomeModal';
 
 export default function HomePage() {
   const location = useLocation();
-  const newProducts = useMemo(() => products.filter((p) => p.isNew).slice(0, 3), []);
-  const bestSellers = useMemo(() => products.filter((p) => p.isBestSeller).slice(0, 4), []);
-  const promoProducts = useMemo(() => products.filter((p) => p.discount).slice(0, 3), []);
+  const { products } = useProductsData();
+  const newProducts = useMemo(() => {
+    const news = products.filter((p) => p.isNew);
+    return (news.length > 0 ? news : products).slice(0, 3);
+  }, [products]);
+
+  const bestSellers = useMemo(() => {
+    const bests = products.filter((p) => p.isBestSeller);
+    // Se nenhum produto foi marcado explicitamente como isBestSeller no backend,
+    // usa os produtos disponíveis ordenados por avaliação (rating) ou os primeiros produtos como fallback
+    if (bests.length > 0) return bests.slice(0, 4);
+    return [...products]
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      .slice(0, 4);
+  }, [products]);
+
+  const promoProducts = useMemo(() => products.filter((p) => p.discount).slice(0, 3), [products]);
 
   useEffect(() => {
     if (!location.hash) return;

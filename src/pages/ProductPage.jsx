@@ -1,31 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Truck, RefreshCw, Star } from 'lucide-react';
-import { products } from '../data/products';
+import { useProductsData } from '../context/ProductsContext';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 import ReviewSystem from '../components/ReviewSystem';
 import styles from './ProductPage.module.css';
 
-// ─── Stock urgency helper ────────────────────────────────────────────────────
 function getStockInfo(product, size) {
   const isOut = product.sizesOutOfStock?.includes(size);
-  if (isOut) return { qty: 0, label: null, urgency: 'out' };
-  const seed = (product.id * size.charCodeAt(0)) % 15;
-  if (seed <= 1) return { qty: seed + 1, label: `Última${seed === 0 ? '' : 's'} ${seed + 1} unidade${seed === 0 ? '' : 's'}`, urgency: 'critical' };
-  if (seed <= 4) return { qty: seed, label: `Restam ${seed} unidades`, urgency: 'low' };
-  return { qty: seed + 5, label: null, urgency: 'ok' };
+  return isOut
+    ? { qty: 0, label: null, urgency: 'out' }
+    : { qty: null, label: null, urgency: 'ok' };
 }
 
-// ─── Lê avaliações do produto ─────────────────────────────────────────────────
-function getProductReviews(productId) {
-  try {
-    const all = JSON.parse(localStorage.getItem('reviews') || '{}');
-    return all[productId] || [];
-  } catch { return []; }
-}
-
-// ─── Mini display de estrelas ─────────────────────────────────────────────────
 function StarRow({ value, count, onClick }) {
   return (
     <button className={styles.starRow} onClick={onClick} title="Ver avaliações">
@@ -52,14 +41,26 @@ export default function ProductPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const product = useMemo(() => products.find((p) => p.id === Number(id)), [id]);
+  const { products } = useProductsData();
+  const product = products.find((p) => p.id === id);
 
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize]  = useState(null);
-  // ✅ 'avaliacoes' adicionado como terceira aba
   const [activeTab, setActiveTab]        = useState('descricao');
   const [error, setError]                = useState('');
   const [toast, setToast]                = useState(false);
+  const [reviews, setReviews]            = useState([]);
+  const [reviewLoading, setReviewLoading] = useState(true);
+
+  // 🔄 Carregar reviews do backend
+  useEffect(() => {
+    if (!id) return;
+    setReviewLoading(true);
+    api.get(`/products/${id}/reviews`)
+      .then((data) => setReviews(data || []))
+      .catch(() => setReviews([]))
+      .finally(() => setReviewLoading(false));
+  }, [id]);
 
   if (!product) {
     return (
@@ -70,14 +71,9 @@ export default function ProductPage() {
     );
   }
 
-  // ─── Dados de avaliações ───────────────────────────────────────────────────
-  const reviews    = getProductReviews(product.id);
   const reviewCount = reviews.length;
-  const reviewAvg  = reviewCount > 0
-    ? reviews.reduce((s, r) => s + r.rating, 0) / reviewCount
-    : 0;
+  const reviewAvg  = product.rating || 0;
 
-  // ─── Compra verificada ────────────────────────────────────────────────────
   const hasPurchased = (() => {
     try {
       const orders = JSON.parse(localStorage.getItem('orders') || '[]');
@@ -115,7 +111,6 @@ export default function ProductPage() {
     }
   }
 
-  // ✅ Rola até as tabs e abre aba de avaliações
   function goToReviews() {
     setActiveTab('avaliacoes');
     setTimeout(() => {
@@ -125,7 +120,6 @@ export default function ProductPage() {
 
   const installment = (product.price / 3).toFixed(2).replace('.', ',');
 
-  // ✅ Definição das 3 tabs
   const TABS = [
     { id: 'descricao',  label: 'Descrição' },
     { id: 'guia',       label: 'Guia de Tamanhos' },
