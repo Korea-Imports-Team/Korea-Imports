@@ -3,14 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, Search, X, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { useSearch } from '../hooks/useProducts';
+import { useProductsData } from '../context/ProductsContext';
 import { categories } from '../data/products';
 import styles from './Header.module.css';
 
 export default function Header() {
   const { cartCount, wishlistItems } = useCart();
   const { user, logout } = useAuth();
-  const { query, setQuery, results } = useSearch();
+  const { query, setQuery, results } = useProductsData();
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);

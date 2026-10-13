@@ -1,11 +1,9 @@
-// ─── src/components/ProtectedRoute.jsx ───────────────────────────────────────
-// Crie este arquivo separado e importe no App.jsx
-
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, adminOnly = false }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/entrar" replace />;
+  if (adminOnly && user.role !== 'ADMIN') return <Navigate to="/" replace />;
   return children;
 }
