@@ -1,12 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from 'react';
+import { api, ApiError } from '../services/api';
 import "./OrdersDashboard.css";
 
 const STATUS_LABELS = {
-  pending:      "Pendente",
-  processing:   "Em Separação",
-  shipped:      "Enviado",
-  "in-transit": "Em Transporte",
-  delivered:    "Entregue",
+  PENDING:    'Pendente',
+  PROCESSING: 'Em Separação',
+  SHIPPED:    'Enviado',
+  IN_TRANSIT: 'Em Transporte',
+  DELIVERED:  'Entregue',
 };
 
 const STATUS_CLASS = {
@@ -16,78 +17,6 @@ const STATUS_CLASS = {
   "in-transit": "od-s-transit",
   delivered:    "od-s-delivered",
 };
-
-const MOCK_ORDERS = [
-  {
-    id: "ORD-0001",
-    customerName: "Lucas Ferreira",
-    date: "2026-04-20",
-    status: "delivered",
-    total: 179.80,
-    shippingInfo: { city: "São Paulo", state: "SP", address: "Rua das Flores, 123", cep: "01310-100", trackingCode: "BR123456789" },
-    items: [
-      { name: "Camiseta Oversized Azul", size: "M", quantity: 1, price: 89.90, image: "/src/assets/Camiseta Oversized Azul.jpeg" },
-      { name: "Shorts Liso Brooksfield", size: "M", quantity: 1, price: 89.90, image: "/src/assets/Shorts Liso Brooksfield.jpeg" },
-    ],
-  },
-  {
-    id: "ORD-0002",
-    customerName: "Mariana Costa",
-    date: "2026-04-22",
-    status: "shipped",
-    total: 143.92,
-    shippingInfo: { city: "Rio de Janeiro", state: "RJ", address: "Av. Atlântica, 500", cep: "22010-000", trackingCode: "BR987654321" },
-    items: [
-      { name: "Camiseta Oversized Nike Branca", size: "G", quantity: 1, price: 143.92, image: "/src/assets/Camiseta Oversized Nike Branca.jpeg" },
-    ],
-  },
-  {
-    id: "ORD-0003",
-    customerName: "Rafael Souza",
-    date: "2026-04-23",
-    status: "processing",
-    total: 161.41,
-    shippingInfo: { city: "Belo Horizonte", state: "MG", address: "Rua da Bahia, 200", cep: "30160-010", trackingCode: null },
-    items: [
-      { name: "Calça Alfaiataria Zara", size: "P", quantity: 1, price: 161.41, image: "/src/assets/Calça Alfaiataria Zara.jpeg" },
-    ],
-  },
-  {
-    id: "ORD-0004",
-    customerName: "Isabela Nunes",
-    date: "2026-04-24",
-    status: "in-transit",
-    total: 259.80,
-    shippingInfo: { city: "Curitiba", state: "PR", address: "Rua XV de Novembro, 55", cep: "80020-310", trackingCode: "BR112233445" },
-    items: [
-      { name: "Polo Emporio Armani Azul", size: "M", quantity: 1, price: 79.90, image: "/src/assets/Polo Emporio Armani Azul.jpeg" },
-      { name: "Moletom Canguru Brooksfield", size: "G", quantity: 1, price: 134.91, image: "/src/assets/Moletom Canguru Brooksfield.jpeg" },
-    ],
-  },
-  {
-    id: "ORD-0005",
-    customerName: "Carlos Mendes",
-    date: "2026-04-25",
-    status: "pending",
-    total: 89.90,
-    shippingInfo: { city: "Porto Alegre", state: "RS", address: "Av. Ipiranga, 1000", cep: "90160-091", trackingCode: null },
-    items: [
-      { name: "Camiseta Lacoste Golf Azul", size: "GG", quantity: 1, price: 89.91, image: "/src/assets/Camiseta Lacoste Golf Azul.jpeg" },
-    ],
-  },
-  {
-    id: "ORD-0006",
-    customerName: "Fernanda Lima",
-    date: "2026-04-26",
-    status: "pending",
-    total: 269.82,
-    shippingInfo: { city: "Salvador", state: "BA", address: "Rua Chile, 8", cep: "40020-050", trackingCode: null },
-    items: [
-      { name: "Camiseta Oversized Azul", size: "P", quantity: 1, price: 89.90, image: "/src/assets/Camiseta Oversized Azul.jpeg" },
-      { name: "Calça Alfaiataria Zara", size: "M", quantity: 1, price: 161.41, image: "/src/assets/Calça Alfaiataria Zara.jpeg" },
-    ],
-  },
-];
 
 /* ── StatusBadge: badge colorido + chevron separado + dropdown limpo ── */
 function StatusBadge({ orderId, status, onChange }) {
@@ -154,58 +83,59 @@ function StatusBadge({ orderId, status, onChange }) {
 
 /* ── Main ── */
 export default function OrdersDashboard() {
-  const [orders, setOrders]           = useState(MOCK_ORDERS);
+  const [orders, setOrders]   = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch]           = useState("");
   const [viewOrder, setViewOrder]     = useState(null);
   const [trackingInput, setTrackingInput] = useState("");
   const [trackingSaved, setTrackingSaved] = useState(false);
 
+  useEffect(() => {
+    api.get('/admin/orders')
+      .then(setOrders)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const filtered = orders.filter(
     (o) =>
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.customerName.toLowerCase().includes(search.toLowerCase())
+      (o.id || '').toLowerCase().includes(search.toLowerCase()) ||
+      (o.shippingAddress?.name || o.customerName || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  function handleStatusChange(orderId, newStatus) {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
+  async function handleStatusChange(orderId, newStatus) {
+    try {
+      const updated = await api.patch(`/admin/orders/${orderId}/status`, { status: newStatus });
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Erro ao atualizar status.');
+    }
   }
 
   function openModal(order) {
     setViewOrder(order);
-    setTrackingInput(order.shippingInfo.trackingCode || "");
+    setTrackingInput(order.trackingCode || order.shippingInfo?.trackingCode || "");
     setTrackingSaved(false);
   }
 
-  function saveTrackingCode() {
+  async function handleTracking(orderId, trackingCode) {
+    try {
+      const updated = await api.patch(`/admin/orders/${orderId}/tracking`, { trackingCode });
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+      return updated;
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Erro ao salvar código.');
+      return null;
+    }
+  }
+
+  async function saveTrackingCode() {
     if (!viewOrder) return;
     const code = trackingInput.trim().toUpperCase();
+    const updated = await handleTracking(viewOrder.id, code || null);
+    if (!updated) return;
 
-    // Update local orders state
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === viewOrder.id
-          ? { ...o, shippingInfo: { ...o.shippingInfo, trackingCode: code || null } }
-          : o
-      )
-    );
-    setViewOrder((prev) => ({
-      ...prev,
-      shippingInfo: { ...prev.shippingInfo, trackingCode: code || null },
-    }));
-
-    // Persist to localStorage so OrdersPage can read it
-    try {
-      const stored = JSON.parse(localStorage.getItem("order_tracking_codes") || "{}");
-      if (code) {
-        stored[viewOrder.id] = code;
-      } else {
-        delete stored[viewOrder.id];
-      }
-      localStorage.setItem("order_tracking_codes", JSON.stringify(stored));
-    } catch (_) {}
-
+    setViewOrder(updated);
     setTrackingSaved(true);
     setTimeout(() => setTrackingSaved(false), 2500);
   }
@@ -254,42 +184,53 @@ export default function OrdersDashboard() {
             {filtered.length === 0 ? (
               <tr><td colSpan={7} className="od-empty">Nenhum pedido encontrado.</td></tr>
             ) : (
-              filtered.map((order) => (
-                <tr key={order.id}>
-                  <td><span className="od-id">{order.id}</span></td>
-                  <td>
-                    <div className="od-customer-name">{order.customerName}</div>
-                    <div className="od-customer-city">{order.shippingInfo.city} - {order.shippingInfo.state}</div>
-                  </td>
-                  <td style={{ fontSize: 13, color: "#374151" }}>
-                    {new Date(order.date).toLocaleDateString("pt-BR")}
-                  </td>
-                  <td style={{ fontSize: 13, color: "#6B7280" }}>
-                    {order.items.length} item{order.items.length !== 1 ? "s" : ""}
-                  </td>
-                  <td><span className="od-total">R$ {order.total.toFixed(2)}</span></td>
-                  <td>
-                    <StatusBadge
-                      orderId={order.id}
-                      status={order.status}
-                      onChange={handleStatusChange}
-                    />
-                  </td>
-                  <td className="right">
-                    <button
-                      className="od-icon-btn"
-                      title="Ver detalhes"
-                      onClick={() => openModal(order)}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    </button>
-                  </td>
-                </tr>
-              ))
+              filtered.map((order) => {
+                const customerName = order.shippingAddress?.name || order.customerName || 'Cliente';
+                const city = order.shippingAddress?.city || order.shippingInfo?.city || '';
+                const state = order.shippingAddress?.state || order.shippingInfo?.state || '';
+                const dateVal = order.createdAt || order.date;
+                const itemsCount = (order.items || []).reduce((sum, it) => sum + (it.quantity || 1), 0);
+                const orderTotal = Number(order.total || 0);
+
+                return (
+                  <tr key={order.id}>
+                    <td><span className="od-id">{order.id}</span></td>
+                    <td>
+                      <div className="od-customer-name">{customerName}</div>
+                      <div className="od-customer-city">
+                        {city ? `${city}${state ? ` - ${state}` : ''}` : 'N/A'}
+                      </div>
+                    </td>
+                    <td style={{ fontSize: 13, color: "#374151" }}>
+                      {dateVal ? new Date(dateVal).toLocaleDateString("pt-BR") : 'N/A'}
+                    </td>
+                    <td style={{ fontSize: 13, color: "#6B7280" }}>
+                      {itemsCount} item{itemsCount !== 1 ? "s" : ""}
+                    </td>
+                    <td><span className="od-total">R$ {orderTotal.toFixed(2)}</span></td>
+                    <td>
+                      <StatusBadge
+                        orderId={order.id}
+                        status={order.status}
+                        onChange={handleStatusChange}
+                      />
+                    </td>
+                    <td className="right">
+                      <button
+                        className="od-icon-btn"
+                        title="Ver detalhes"
+                        onClick={() => openModal(order)}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -313,10 +254,18 @@ export default function OrdersDashboard() {
             {/* Cliente */}
             <div className="od-section">
               <div className="od-section-title">Cliente</div>
-              <div className="od-info-name">{viewOrder.customerName}</div>
-              <div className="od-info-sub">{viewOrder.shippingInfo.address}</div>
+              <div className="od-info-name">
+                {viewOrder.shippingAddress?.name || viewOrder.customerName || 'Cliente'}
+              </div>
               <div className="od-info-sub">
-                {viewOrder.shippingInfo.city} - {viewOrder.shippingInfo.state} - CEP {viewOrder.shippingInfo.cep}
+                {viewOrder.shippingAddress
+                  ? `${viewOrder.shippingAddress.street || ''}${viewOrder.shippingAddress.number ? `, ${viewOrder.shippingAddress.number}` : ''}${viewOrder.shippingAddress.complement ? ` - ${viewOrder.shippingAddress.complement}` : ''}${viewOrder.shippingAddress.neighborhood ? ` - ${viewOrder.shippingAddress.neighborhood}` : ''}`
+                  : (viewOrder.shippingInfo?.address || 'Nenhum endereço informado')}
+              </div>
+              <div className="od-info-sub">
+                {viewOrder.shippingAddress
+                  ? `${viewOrder.shippingAddress.city || ''} - ${viewOrder.shippingAddress.state || ''} - CEP ${viewOrder.shippingAddress.cep || ''}`
+                  : `${viewOrder.shippingInfo?.city || ''} - ${viewOrder.shippingInfo?.state || ''} - CEP ${viewOrder.shippingInfo?.cep || ''}`}
               </div>
             </div>
 
@@ -341,9 +290,9 @@ export default function OrdersDashboard() {
                   ✓ Código salvo — o cliente já pode ver
                 </div>
               )}
-              {viewOrder.shippingInfo.trackingCode && (
+              {(viewOrder.trackingCode || viewOrder.shippingInfo?.trackingCode) && (
                 <a
-                  href={`https://rastreamento.correios.com.br/app/index.php?objetos=${viewOrder.shippingInfo.trackingCode}`}
+                  href={`https://rastreamento.correios.com.br/app/index.php?objetos=${viewOrder.trackingCode || viewOrder.shippingInfo?.trackingCode}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="od-tracking-link"
@@ -356,27 +305,34 @@ export default function OrdersDashboard() {
             {/* Produtos */}
             <div className="od-section">
               <div className="od-section-title">Produtos</div>
-              {viewOrder.items.map((item, i) => (
-                <div key={i} className="od-item-row">
-                  <img
-                    className="od-item-img"
-                    src={item.image}
-                    alt={item.name}
-                    onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div className="od-item-name">{item.name}</div>
-                    <div className="od-item-sub">Tamanho: {item.size} • Qtd: {item.quantity}</div>
+              {(viewOrder.items || []).map((item, i) => {
+                const itemName = item.productName || item.name;
+                const itemImg = item.productImage || item.image;
+                const unitPrice = Number(item.priceAtTime ?? item.price ?? 0);
+                const itemTotal = Number(item.subtotal ?? (unitPrice * (item.quantity || 1)));
+
+                return (
+                  <div key={i} className="od-item-row">
+                    <img
+                      className="od-item-img"
+                      src={itemImg}
+                      alt={itemName}
+                      onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div className="od-item-name">{itemName}</div>
+                      <div className="od-item-sub">Tamanho: {item.size || 'N/A'} • Qtd: {item.quantity}</div>
+                    </div>
+                    <div className="od-item-price">R$ {itemTotal.toFixed(2)}</div>
                   </div>
-                  <div className="od-item-price">R$ {(item.price * item.quantity).toFixed(2)}</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Total */}
             <div className="od-total-row">
               <span className="od-total-label">Total</span>
-              <span className="od-total-val">R$ {viewOrder.total.toFixed(2)}</span>
+              <span className="od-total-val">R$ {Number(viewOrder.total || 0).toFixed(2)}</span>
             </div>
 
           </div>
