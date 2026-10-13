@@ -1,31 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Truck, Zap, Package } from 'lucide-react';
 import styles from './ShippingPage.module.css';
-
-const SHIPPING_OPTIONS = [
-    {
-        id: 'economica',
-        label: 'Econômica',
-        sub: '10 a 15 dias úteis',
-        price: 15.90,
-        icon: Package,
-    },
-    {
-        id: 'padrao',
-        label: 'Padrão',
-        sub: '5 a 7 dias úteis',
-        price: 25.90,
-        icon: Truck,
-    },
-    {
-        id: 'expressa',
-        label: 'Expressa',
-        sub: '2 a 3 dias úteis',
-        price: 39.90,
-        icon: Zap,
-    },
-];
+import { api, ApiError } from '../services/api';
 
 const STEPS = [
     { number: 1, label: 'Endereço',  sub: 'Dados de entrega' },
@@ -38,6 +15,13 @@ const CURRENT_STEP = 2;
 
 const fmt = (n) => `R$ ${n.toFixed(2).replace('.', ',')}`;
 
+// Ícones para as opções de frete
+const SHIPPING_ICONS = {
+    ECONOMICA: Package,
+    PADRAO: Truck,
+    EXPRESSA: Zap,
+};
+
 export default function ShippingPage() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -45,26 +29,43 @@ export default function ShippingPage() {
 
     const { form, cartItems = [], subtotal = 0, discount = 0 } = state;
 
-    const [selected, setSelected] = useState('padrao');
+    const [shippingOptions, setShippingOptions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selected, setSelected] = useState('PADRAO');
     const [couponInput, setCouponInput]   = useState('');
     const [couponApplied, setCouponApplied] = useState(state.couponApplied || '');
     const [couponDiscount, setCouponDiscount] = useState(state.couponDiscount || 0);
     const [couponError, setCouponError]   = useState('');
 
-    const VALID_COUPONS = { 'BEMVINDO10': 10, 'KOREA15': 15 };
+    // 🔄 Carregar opções de frete do backend
+    useEffect(() => {
+        setLoading(true);
+        api.get('/shipping-options')
+            .then((data) => {
+                setShippingOptions(data.options || []);
+                // Set default if PADRAO exists, else first option
+                const padrao = data.options?.find((o) => o.id === 'PADRAO');
+                if (padrao) setSelected('PADRAO');
+                else if (data.options?.[0]) setSelected(data.options[0].id);
+            })
+            .catch(() => setShippingOptions([]))
+            .finally(() => setLoading(false));
+    }, []);
 
-    const shippingPrice = SHIPPING_OPTIONS.find((o) => o.id === selected)?.price ?? 0;
+    const shippingPrice = shippingOptions.find((o) => o.id === selected)?.price ?? 0;
     const discountAmt   = (subtotal * couponDiscount) / 100;
     const total         = subtotal + shippingPrice - discountAmt;
 
-    function handleApplyCoupon() {
+    async function handleApplyCoupon() {
         const code = couponInput.trim().toUpperCase();
-        if (VALID_COUPONS[code]) {
-            setCouponDiscount(VALID_COUPONS[code]);
+        if (!code) return;
+        try {
+            const result = await api.post('/coupons/validate', { code, subtotal }, { auth: false });
+            setCouponDiscount(Number(result.discountAmount));
             setCouponApplied(code);
             setCouponError('');
-        } else {
-            setCouponError('Cupom inválido ou expirado.');
+        } catch (err) {
+            setCouponError(err instanceof ApiError ? err.message : 'Cupom inválido ou expirado.');
             setCouponDiscount(0);
             setCouponApplied('');
         }
@@ -137,32 +138,38 @@ export default function ShippingPage() {
                             </div>
 
                             <div className={styles.options}>
-                                {SHIPPING_OPTIONS.map((opt) => {
-                                    const Icon = opt.icon;
-                                    const isSelected = selected === opt.id;
-                                    return (
-                                        <button
-                                            key={opt.id}
-                                            type="button"
-                                            className={`${styles.option} ${isSelected ? styles.optionSelected : ''}`}
-                                            onClick={() => setSelected(opt.id)}
-                                        >
-                                            <div className={`${styles.optionIconWrap} ${isSelected ? styles.optionIconActive : ''}`}>
-                                                <Icon size={20} />
-                                            </div>
-                                            <div className={styles.optionInfo}>
-                                                <span className={styles.optionLabel}>{opt.label}</span>
-                                                <span className={styles.optionSub}>{opt.sub}</span>
-                                            </div>
-                                            <span className={`${styles.optionPrice} ${isSelected ? styles.optionPriceActive : ''}`}>
-                                                {fmt(opt.price)}
-                                            </span>
-                                            <div className={`${styles.radio} ${isSelected ? styles.radioSelected : ''}`}>
-                                                {isSelected && <div className={styles.radioDot} />}
-                                            </div>
-                                        </button>
-                                    );
-                                })}
+                                {loading ? (
+                                    <p>Carregando opções de frete...</p>
+                                ) : shippingOptions.length === 0 ? (
+                                    <p>Nenhuma opção de frete disponível</p>
+                                ) : (
+                                    shippingOptions.map((opt) => {
+                                        const Icon = SHIPPING_ICONS[opt.id] || Package;
+                                        const isSelected = selected === opt.id;
+                                        return (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                className={`${styles.option} ${isSelected ? styles.optionSelected : ''}`}
+                                                onClick={() => setSelected(opt.id)}
+                                            >
+                                                <div className={`${styles.optionIconWrap} ${isSelected ? styles.optionIconActive : ''}`}>
+                                                    <Icon size={20} />
+                                                </div>
+                                                <div className={styles.optionInfo}>
+                                                    <span className={styles.optionLabel}>{opt.name}</span>
+                                                    <span className={styles.optionSub}>{opt.days} dias úteis</span>
+                                                </div>
+                                                <span className={`${styles.optionPrice} ${isSelected ? styles.optionPriceActive : ''}`}>
+                                                    {fmt(opt.price)}
+                                                </span>
+                                                <div className={`${styles.radio} ${isSelected ? styles.radioSelected : ''}`}>
+                                                    {isSelected && <div className={styles.radioDot} />}
+                                                </div>
+                                            </button>
+                                        );
+                                    })
+                                )}
                             </div>
 
                             {/* Botões */}

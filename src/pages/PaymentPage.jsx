@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard } from 'lucide-react';
 import styles from './PaymentPage.module.css';
+import { api, ApiError } from '../services/api';
+import { useCart } from '../context/CartContext';
 
 const STEPS = [
     { number: 1, label: 'Endereço',  sub: 'Dados de entrega' },
@@ -11,6 +13,14 @@ const STEPS = [
 ];
 
 const CURRENT_STEP = 3;
+
+// Mapeia o valor interno do frontend → enum do backend
+const PAYMENT_METHOD_MAP = {
+    credito: 'CREDIT',
+    debito:  'DEBIT',
+    pix:     'PIX',
+    boleto:  'BOLETO',
+};
 
 const PAYMENT_METHODS = [
     {
@@ -64,12 +74,12 @@ const PAYMENT_METHODS = [
     },
 ];
 
-const VALID_COUPONS = { 'BEMVINDO10': 10, 'KOREA15': 15 };
 const fmt = (n) => `R$ ${n.toFixed(2).replace('.', ',')}`;
 
 export default function PaymentPage() {
     const location = useLocation();
     const navigate = useNavigate();
+    const { cartItems: ctxCartItems } = useCart();
     const state = location.state || {};
 
     const {
@@ -94,18 +104,24 @@ export default function PaymentPage() {
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCvv, setCardCvv]       = useState('');
     const [installments, setInstallments] = useState('1');
+    
+    // 🛒 Criação de pedido
+    const [orderLoading, setOrderLoading] = useState(false);
+    const [orderError, setOrderError] = useState('');
 
     const discountAmt = (subtotal * couponDiscount) / 100;
     const total       = subtotal + shippingPrice - discountAmt;
 
-    function handleApplyCoupon() {
+    async function handleApplyCoupon() {
         const code = couponInput.trim().toUpperCase();
-        if (VALID_COUPONS[code]) {
-            setCouponDiscount(VALID_COUPONS[code]);
+        if (!code) return;
+        try {
+            const result = await api.post('/coupons/validate', { code, subtotal }, { auth: false });
+            setCouponDiscount(result.discountPercentage ?? result.discountAmount ?? 0);
             setCouponApplied(code);
             setCouponError('');
-        } else {
-            setCouponError('Cupom inválido ou expirado.');
+        } catch (err) {
+            setCouponError(err instanceof ApiError ? err.message : 'Cupom inválido ou expirado.');
             setCouponDiscount(0);
             setCouponApplied('');
         }
@@ -125,18 +141,55 @@ export default function PaymentPage() {
         navigate('/frete', { state });
     }
 
-    function handleContinue() {
-        navigate('/revisao', {
-            state: {
-                ...state,
-                paymentMethod: selected,
-                couponApplied,
-                couponDiscount,
-                discount: discountAmt,
-                total,
-                cardName: selected === 'credito' || selected === 'debito' ? cardName : undefined,
-            },
-        });
+    async function handleContinue() {
+        setOrderLoading(true);
+        setOrderError('');
+        try {
+            // 🛒 Criar pedido no backend
+            const orderPayload = {
+                items: cartItems.map((item) => ({
+                    productId: item.id,
+                    size: item.selectedSize,
+                    quantity: item.quantity,
+                })),
+                shippingOption: shippingOption || 'PADRAO',
+                paymentMethod: PAYMENT_METHOD_MAP[selected] || selected.toUpperCase(),
+                shippingAddress: {
+                    name:         form.name         || '',
+                    street:       form.address      || '',
+                    number:       form.number       || '',
+                    complement:   form.complement   || '',
+                    neighborhood: form.neighborhood || '',
+                    city:         form.city         || '',
+                    state:        form.state        || '',
+                    cep:          form.cep          || '',
+                    phone:        form.phone        || '',
+                },
+                couponCode: couponApplied || undefined,
+            };
+            
+            const orderResponse = await api.post('/orders', orderPayload);
+            const orderId = orderResponse.id;
+
+            navigate('/revisao', {
+                state: {
+                    ...state,
+                    orderId,
+                    paymentMethod: selected,
+                    couponApplied,
+                    couponDiscount,
+                    discount: discountAmt,
+                    total,
+                    cardName: selected === 'credito' || selected === 'debito' ? cardName : undefined,
+                    createdAt: new Date().toISOString(),
+                },
+            });
+        } catch (err) {
+            setOrderError(err.message || 'Erro ao criar pedido');
+            console.error(err);
+        } finally {
+            setOrderLoading(false);
+        }
     }
 
     const isCard = selected === 'credito' || selected === 'debito';
@@ -311,12 +364,13 @@ export default function PaymentPage() {
                             )}
 
                             {/* Botões */}
+                            {orderError && <p style={{ color: '#dc2626', marginBottom: '1rem' }}>❌ {orderError}</p>}
                             <div className={styles.actions}>
-                                <button type="button" className={styles.btnBack} onClick={handleBack}>
+                                <button type="button" className={styles.btnBack} onClick={handleBack} disabled={orderLoading}>
                                     Voltar
                                 </button>
-                                <button type="button" className={styles.btnContinue} onClick={handleContinue}>
-                                    Continuar para Revisão
+                                <button type="button" className={styles.btnContinue} onClick={handleContinue} disabled={orderLoading}>
+                                    {orderLoading ? 'Processando...' : 'Continuar para Revisão'}
                                 </button>
                             </div>
                         </div>

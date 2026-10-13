@@ -4,22 +4,20 @@ import { ArrowLeft, MapPin, User, Tag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import styles from './CheckoutPage.module.css';
-
-const VALID_COUPONS = { 'BEMVINDO10': 10, 'KOREA15': 15 };
+import { api, ApiError } from '../services/api';
 
 const STEPS = [
-    { number: 1, label: 'Endereço',  sub: 'Dados de entrega' },
-    { number: 2, label: 'Frete',     sub: 'Método de envio' },
+    { number: 1, label: 'Endereço', sub: 'Dados de entrega' },
+    { number: 2, label: 'Frete', sub: 'Método de envio' },
     { number: 3, label: 'Pagamento', sub: 'Forma de pagamento' },
-    { number: 4, label: 'Revisão',   sub: 'Confirmar pedido' },
+    { number: 4, label: 'Revisão', sub: 'Confirmar pedido' },
 ];
 
-// ✅ Máscara de telefone
 function maskPhone(value) {
     const digits = value.replace(/\D/g, '').slice(0, 11);
     if (digits.length === 0) return '';
-    if (digits.length <= 2)  return `(${digits}`;
-    if (digits.length <= 6)  return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 2) return `(${digits}`;
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
     if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
@@ -38,36 +36,36 @@ function getProfile() {
 
 export default function CheckoutPage() {
     const { cartItems } = useCart();
-    const { user }      = useAuth();
-    const navigate      = useNavigate();
+    const { user } = useAuth();
+    const navigate = useNavigate();
 
     const defaultAddress = getDefaultAddress();
-    const profile        = getProfile();
+    const profile = getProfile();
 
-    const [cepError, setCepError]             = useState('');
-    const [loadingCep, setLoadingCep]         = useState(false);
-    const [addressLocked, setAddressLocked]   = useState(!!defaultAddress);
-    const [couponInput, setCouponInput]       = useState('');
+    const [cepError, setCepError] = useState('');
+    const [loadingCep, setLoadingCep] = useState(false);
+    const [addressLocked, setAddressLocked] = useState(!!defaultAddress);
+    const [couponInput, setCouponInput] = useState('');
     const [couponDiscount, setCouponDiscount] = useState(0);
-    const [couponError, setCouponError]       = useState('');
-    const [couponApplied, setCouponApplied]   = useState('');
+    const [couponError, setCouponError] = useState('');
+    const [couponApplied, setCouponApplied] = useState('');
 
     const [form, setForm] = useState({
-        name:         defaultAddress?.name         || profile.name  || '',
-        email:        user?.email                  || '',
-        phone:        defaultAddress?.phone        || profile.phone || '',
-        cep:          defaultAddress?.cep          || '',
-        address:      defaultAddress?.address      || '',
-        number:       defaultAddress?.number       || '',
-        complement:   defaultAddress?.complement   || '',
+        name: defaultAddress?.name || profile.name || '',
+        email: user?.email || '',
+        phone: defaultAddress?.phone || profile.phone || '',
+        cep: defaultAddress?.cep || '',
+        address: defaultAddress?.address || '',
+        number: defaultAddress?.number || '',
+        complement: defaultAddress?.complement || '',
         neighborhood: defaultAddress?.neighborhood || '',
-        city:         defaultAddress?.city         || '',
-        state:        defaultAddress?.state        || '',
+        city: defaultAddress?.city || '',
+        state: defaultAddress?.state || '',
     });
 
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const discount = (subtotal * couponDiscount) / 100;
-    const total    = subtotal - discount;
+    const total = subtotal - discount;
 
     function handleChange(e) {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -87,30 +85,35 @@ export default function CheckoutPage() {
         if (clean.length === 8) {
             setLoadingCep(true);
             try {
-                const res  = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+                const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
                 const data = await res.json();
                 if (data.erro) { setCepError('CEP não encontrado 😕'); return; }
                 setForm((prev) => ({
                     ...prev,
-                    address:      data.logradouro || '',
-                    neighborhood: data.bairro     || '',
-                    city:         data.localidade || '',
-                    state:        data.uf         || '',
+                    address: data.logradouro || '',
+                    neighborhood: data.bairro || '',
+                    city: data.localidade || '',
+                    state: data.uf || '',
                 }));
                 setAddressLocked(true);
             } catch { setCepError('Erro ao buscar CEP 😕'); }
-            finally  { setLoadingCep(false); }
+            finally { setLoadingCep(false); }
         }
     }
 
-    function handleApplyCoupon() {
+    async function handleApplyCoupon() {
         const code = couponInput.trim().toUpperCase();
-        if (VALID_COUPONS[code]) {
-            setCouponDiscount(VALID_COUPONS[code]);
+        if (!code) return;
+        try {
+            const result = await api.post('/coupons/validate', {
+                code,
+                subtotal,
+            }, { auth: false });
+            setCouponDiscount(result.discountPercentage ?? result.discountAmount ?? 0);
             setCouponApplied(code);
             setCouponError('');
-        } else {
-            setCouponError('Cupom inválido ou expirado.');
+        } catch (err) {
+            setCouponError(err instanceof ApiError ? err.message : 'Cupom inválido ou expirado.');
             setCouponDiscount(0);
             setCouponApplied('');
         }
@@ -144,7 +147,7 @@ export default function CheckoutPage() {
                 {/* Stepper */}
                 <div className={styles.stepper}>
                     {STEPS.map((step, idx) => {
-                        const isActive    = step.number === 1;
+                        const isActive = step.number === 1;
                         const isCompleted = step.number < 1;
                         return (
                             <div key={step.number} className={styles.stepperItem}>
@@ -223,7 +226,7 @@ export default function CheckoutPage() {
                                     <label className={styles.label}>CEP *</label>
                                     <input type="text" name="cep" value={form.cep} onChange={handleCep}
                                         placeholder="00000-000" className={styles.input} maxLength={9} required />
-                                    {cepError   && <span className={styles.inputError}>{cepError}</span>}
+                                    {cepError && <span className={styles.inputError}>{cepError}</span>}
                                     {loadingCep && <span className={styles.cepLoading}>Buscando...</span>}
                                 </div>
                                 <div className={`${styles.field} ${styles.fullWidth}`}>
@@ -294,7 +297,7 @@ export default function CheckoutPage() {
                                     <button type="button" className={styles.couponBtn}
                                         onClick={handleApplyCoupon} disabled={!!couponApplied}>Aplicar</button>
                                 </div>
-                                {couponError   && <p className={styles.couponError}>{couponError}</p>}
+                                {couponError && <p className={styles.couponError}>{couponError}</p>}
                                 {couponApplied && <p className={styles.couponSuccess}>✓ Cupom {couponApplied} aplicado! -{couponDiscount}%</p>}
                             </div>
 
