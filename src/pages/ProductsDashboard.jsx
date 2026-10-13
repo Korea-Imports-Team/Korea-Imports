@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { products as initialProducts } from "../data/products";
+import { useEffect, useState } from "react";
+import { useProductsData } from '../context/ProductsContext';
+import { api, ApiError } from '../services/api';
 import "./ProductsDashboard.css";
 
-const SIZES      = ["P", "M", "G", "GG"];
+
+const SIZES = ["P", "M", "G", "GG"];
 const CATEGORIES = ["camisetas", "shorts", "calcas", "roupas-de-frio", "camisas-de-time"];
 
 const EMPTY_STOCK = { P: 0, M: 0, G: 0, GG: 0 };
@@ -10,7 +12,8 @@ const EMPTY_STOCK = { P: 0, M: 0, G: 0, GG: 0 };
 const EMPTY_FORM = {
   name: "", price: "", category: "", description: "",
   discount: "", sizes: [], image: "",
-  stock: { ...EMPTY_STOCK },   
+  isNew: false, isBestSeller: false,
+  stock: { ...EMPTY_STOCK },
 };
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -31,8 +34,8 @@ function totalStock(stockBySize) {
 
 function stockStatus(stockBySize) {
   const t = totalStock(stockBySize);
-  if (t <= 0)  return "out";
-  if (t < 10)  return "low";
+  if (t <= 0) return "out";
+  if (t < 10) return "low";
   return "ok";
 }
 
@@ -66,18 +69,25 @@ function StockEditor({ sizes, stock, onChange }) {
 
 export default function ProductsDashboard() {
   // Inicializa produtos com estoque calculado
-  const [productList, setProductList] = useState(() =>
-    initialProducts.map((p) => ({ ...p, stockBySize: buildStock(p) }))
-  );
+  const { products: initialProducts, loading, refreshProducts } = useProductsData();
+  const [productList, setProductList] = useState([]);
 
-  const [search, setSearch]         = useState("");
-  const [showAdd, setShowAdd]       = useState(false);
-  const [deleteId, setDeleteId]     = useState(null);
-  const [formData, setFormData]     = useState(EMPTY_FORM);
-  const [editId, setEditId]         = useState(null);
-  const [editForm, setEditForm]     = useState(EMPTY_FORM);
+  useEffect(() => {
+    if (initialProducts.length > 0) setProductList(initialProducts);
+  }, [initialProducts]);
+
+  const [search, setSearch] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
   const [showStockReport, setShowStockReport] = useState(false);
-  const [stockThreshold, setStockThreshold]   = useState(10);
+  const [stockThreshold, setStockThreshold] = useState(10);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingImageEdit, setUploadingImageEdit] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const [imageErrorEdit, setImageErrorEdit] = useState("");
 
   const filtered = productList.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -118,81 +128,138 @@ export default function ProductsDashboard() {
   }
 
   // ─── Imagem ─────────────────────────────────────────────────────────────────
-  function handleImageFile(e, setter) {
+  async function handleImageFile(e, setter, setLoading, setError) {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setter((prev) => ({ ...prev, image: ev.target.result }));
-    reader.readAsDataURL(file);
+    
+    setLoading(true);
+    setError("");
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await api.post('/admin/products/upload', formData);
+      
+      const imageUrl = response.url || response.imageUrl;
+      if (!imageUrl) throw new Error('URL de imagem não recebida');
+      
+      setter((prev) => ({ ...prev, image: imageUrl }));
+    } catch (err) {
+      const errorMsg = err instanceof ApiError ? err.message : 'Erro ao enviar imagem';
+      setError(errorMsg);
+      console.error('Erro upload:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ─── Editar ─────────────────────────────────────────────────────────────────
   function openEdit(product) {
     setEditId(product.id);
     setEditForm({
-      name:        product.name,
-      price:       String(product.price),
-      category:    product.category,
+      name: product.name,
+      price: String(product.price),
+      category: product.category,
       description: product.description || "",
-      discount:    product.discount ? String(product.discount) : "",
-      sizes:       product.sizes || [],
-      image:       product.image || "",
-      stock:       { ...buildStock(product) },
+      discount: product.discount ? String(product.discount) : "",
+      sizes: product.sizes || [],
+      image: product.image || "",
+      isNew: !!product.isNew,
+      isBestSeller: !!product.isBestSeller,
+      stock: { ...buildStock(product) },
     });
   }
 
-  function handleEditSubmit(e) {
+  async function handleEditSubmit(e) {
     e.preventDefault();
-    setProductList((prev) =>
-      prev.map((p) =>
-        p.id === editId
-          ? {
-              ...p,
-              name:        editForm.name,
-              category:    editForm.category,
-              price:       parseFloat(editForm.price),
-              discount:    editForm.discount ? parseInt(editForm.discount) : null,
-              sizes:       editForm.sizes,
-              image:       editForm.image,
-              description: editForm.description,
-              stockBySize: { ...editForm.stock },
-              // Recalcula sizesOutOfStock para manter compatibilidade
-              sizesOutOfStock: editForm.sizes.filter((s) => (editForm.stock[s] ?? 0) === 0),
-            }
-          : p
-      )
-    );
-    setEditId(null);
+    if (!editId) return;
+    try {
+      const updated = await api.put(`/admin/products/${editId}`, {
+        name: editForm.name,
+        category: editForm.category,
+        price: parseFloat(editForm.price),
+        discount: editForm.discount ? parseInt(editForm.discount) : null,
+        image: editForm.image || null,
+        description: editForm.description || null,
+        sizes: editForm.sizes,
+        stockBySize: { ...editForm.stock },
+        sizesOutOfStock: editForm.sizes.filter((s) => (editForm.stock[s] ?? 0) === 0),
+        isNew: !!editForm.isNew,
+        isBestSeller: !!editForm.isBestSeller,
+        pixDiscount: 5,
+        colors: [],
+        tags: [],
+      });
+      setProductList((prev) => prev.map((p) => p.id === editId ? updated : p));
+      setEditId(null);
+      refreshProducts();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Erro ao atualizar produto.');
+    }
   }
 
-  // ─── Adicionar ──────────────────────────────────────────────────────────────
-  function handleSubmit(e) {
+  // handleSubmit (criar):
+  async function handleSubmit(e) {
     e.preventDefault();
-    const newProduct = {
-      id:             Date.now(),
-      name:           formData.name,
-      category:       formData.category,
-      price:          parseFloat(formData.price),
-      originalPrice:  null,
-      discount:       formData.discount ? parseInt(formData.discount) : null,
-      rating:         0,
-      image:          formData.image || "",
-      isNew:          true,
-      isBestSeller:   false,
-      tags:           [],
-      sizes:          formData.sizes,
-      sizesOutOfStock: formData.sizes.filter((s) => (formData.stock[s] ?? 0) === 0),
-      pixDiscount:    5,
-      stockBySize:    { ...formData.stock },
-    };
-    setProductList((prev) => [newProduct, ...prev]);
-    setFormData(EMPTY_FORM);
-    setShowAdd(false);
+    try {
+      const created = await api.post('/admin/products', {
+        name: formData.name,
+        category: formData.category,
+        price: parseFloat(formData.price),
+        discount: formData.discount ? parseInt(formData.discount) : null,
+        image: formData.image || null,
+        description: formData.description || null,
+        sizes: formData.sizes,
+        stockBySize: { ...formData.stock },
+        sizesOutOfStock: formData.sizes.filter((s) => (formData.stock[s] ?? 0) === 0),
+        isNew: !!formData.isNew,
+        isBestSeller: !!formData.isBestSeller,
+        pixDiscount: 5,
+        colors: [],
+        tags: [],
+      });
+      setProductList((prev) => [created, ...prev]);
+      setFormData(EMPTY_FORM);
+      setShowAdd(false);
+      refreshProducts();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Erro ao criar produto.');
+    }
   }
 
-  function handleDelete(id) {
-    setProductList((prev) => prev.filter((p) => p.id !== id));
-    setDeleteId(null);
+  // handleSave (editar):
+  async function handleSave(id) {
+    try {
+      const updated = await api.put(`/admin/products/${id}`, {
+        name: editForm.name,
+        category: editForm.category,
+        price: parseFloat(editForm.price),
+        discount: editForm.discount ? parseInt(editForm.discount) : null,
+        image: editForm.image,
+        description: editForm.description,
+        sizes: editForm.sizes,
+        stockBySize: { ...editForm.stock },
+        sizesOutOfStock: editForm.sizes.filter((s) => (editForm.stock[s] ?? 0) === 0),
+      });
+      setProductList((prev) => prev.map((p) => p.id === id ? updated : p));
+      setEditId(null);
+      refreshProducts();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Erro ao atualizar produto.');
+    }
+  }
+
+  // handleDelete:
+  async function handleDelete(id) {
+    try {
+      await api.delete(`/admin/products/${id}`);
+      setProductList((prev) => prev.filter((p) => p.id !== id));
+      setDeleteId(null);
+      refreshProducts();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Erro ao remover produto.');
+    }
   }
 
   // ─── Status ─────────────────────────────────────────────────────────────────
@@ -223,7 +290,7 @@ export default function ProductsDashboard() {
           {outProducts.length > 0 && (
             <div className="pd-alert pd-alert-danger">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
               <strong>{outProducts.length} produto{outProducts.length !== 1 ? "s" : ""} esgotado{outProducts.length !== 1 ? "s" : ""}:</strong>
               {outProducts.slice(0, 3).map((p) => p.name).join(", ")}
@@ -233,7 +300,7 @@ export default function ProductsDashboard() {
           {criticalProducts.length > 0 && (
             <div className="pd-alert pd-alert-warning">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
               <strong>{criticalProducts.length} produto{criticalProducts.length !== 1 ? "s" : ""} com estoque baixo</strong>
               {" "}(abaixo de {stockThreshold} unidades)
@@ -267,13 +334,13 @@ export default function ProductsDashboard() {
           </div>
           <button className="pd-btn-outline" onClick={() => setShowStockReport(true)}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 20V10M12 20V4M6 20v-6"/>
+              <path d="M18 20V10M12 20V4M6 20v-6" />
             </svg>
             Relatório
           </button>
           <button className="pd-btn" onClick={() => setShowAdd(true)}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             Adicionar Produto
           </button>
@@ -285,7 +352,7 @@ export default function ProductsDashboard() {
         <div className="pd-search-wrap">
           <span className="pd-search-icon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
           </span>
           <input
@@ -317,7 +384,7 @@ export default function ProductsDashboard() {
             ) : (
               filtered.map((product) => {
                 const status = stockStatus(product.stockBySize);
-                const total  = totalStock(product.stockBySize);
+                const total = totalStock(product.stockBySize);
                 return (
                   <tr key={product.id} className={status === "out" ? "pd-row-out" : status === "low" ? "pd-row-low" : ""}>
                     <td>
@@ -358,16 +425,16 @@ export default function ProductsDashboard() {
                       <div className="pd-actions">
                         <button className="pd-icon-btn" title="Editar" onClick={() => openEdit(product)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
                         </button>
                         <button className="pd-icon-btn del" title="Remover" onClick={() => setDeleteId(product.id)}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                            <path d="M10 11v6M14 11v6"/>
-                            <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
                           </svg>
                         </button>
                       </div>
@@ -395,9 +462,10 @@ export default function ProductsDashboard() {
               </div>
 
               <div className="pd-field">
-                <label className="pd-label">Imagem do Produto</label>
-                <input type="file" accept="image/*" className="pd-input-file"
-                  onChange={(e) => handleImageFile(e, setFormData)} />
+                <label className="pd-label">Imagem do Produto {uploadingImage && '(enviando...)'}</label>
+                <input type="file" accept="image/*" className="pd-input-file" disabled={uploadingImage}
+                  onChange={(e) => handleImageFile(e, setFormData, setUploadingImage, setImageError)} />
+                {imageError && <div style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{imageError}</div>}
                 {formData.image && <img src={formData.image} alt="preview" className="pd-img-preview" />}
               </div>
 
@@ -447,9 +515,25 @@ export default function ProductsDashboard() {
               </div>
 
               <div className="pd-field">
-                <label className="pd-label" htmlFor="pd-description">Descrição</label>
-                <textarea id="pd-description" className="pd-textarea" value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                <label className="pd-label">Destaques</label>
+                <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.isNew}
+                      onChange={(e) => setFormData({ ...formData, isNew: e.target.checked })}
+                    />
+                    Novo (Novidades)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.isBestSeller}
+                      onChange={(e) => setFormData({ ...formData, isBestSeller: e.target.checked })}
+                    />
+                    Mais Vendido (Destaques)
+                  </label>
+                </div>
               </div>
 
               <div className="pd-modal-footer">
@@ -476,9 +560,10 @@ export default function ProductsDashboard() {
               </div>
 
               <div className="pd-field">
-                <label className="pd-label">Imagem do Produto</label>
-                <input type="file" accept="image/*" className="pd-input-file"
-                  onChange={(e) => handleImageFile(e, setEditForm)} />
+                <label className="pd-label">Imagem do Produto {uploadingImageEdit && '(enviando...)'}</label>
+                <input type="file" accept="image/*" className="pd-input-file" disabled={uploadingImageEdit}
+                  onChange={(e) => handleImageFile(e, setEditForm, setUploadingImageEdit, setImageErrorEdit)} />
+                {imageErrorEdit && <div style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>{imageErrorEdit}</div>}
                 {editForm.image && <img src={editForm.image} alt="preview" className="pd-img-preview" />}
               </div>
 
@@ -533,6 +618,28 @@ export default function ProductsDashboard() {
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
               </div>
 
+              <div className="pd-field">
+                <label className="pd-label">Destaques</label>
+                <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={editForm.isNew}
+                      onChange={(e) => setEditForm({ ...editForm, isNew: e.target.checked })}
+                    />
+                    Novo (Novidades)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={editForm.isBestSeller}
+                      onChange={(e) => setEditForm({ ...editForm, isBestSeller: e.target.checked })}
+                    />
+                    Mais Vendido (Destaques)
+                  </label>
+                </div>
+              </div>
+
               <div className="pd-modal-footer">
                 <button type="button" className="pd-btn-ghost" onClick={() => setEditId(null)}>Cancelar</button>
                 <button type="submit" className="pd-btn">Salvar Alterações</button>
@@ -584,8 +691,8 @@ export default function ProductsDashboard() {
                 return (
                   <div className="pd-stock-ok-msg">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-                      <polyline points="22 4 12 14.01 9 11.01"/>
+                      <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
                     </svg>
                     <span>Todos os produtos têm estoque acima de {stockThreshold} unidades.</span>
                   </div>
