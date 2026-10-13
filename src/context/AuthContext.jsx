@@ -1,63 +1,95 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { auth, googleProvider } from '../services/firebase';
-import {
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-} from 'firebase/auth';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { api } from '../services/api';
 
 const AuthContext = createContext(null);
 
+function loadStoredUser() {
+  try {
+    const raw = localStorage.getItem('authUser');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistSession(auth) {
+  localStorage.setItem('accessToken', auth.accessToken);
+  localStorage.setItem('refreshToken', auth.refreshToken);
+  const user = {
+    id: auth.userId,
+    name: auth.name,
+    displayName: auth.name,
+    email: auth.email,
+    role: auth.role,
+  };
+  localStorage.setItem('authUser', JSON.stringify(user));
+  return user;
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(loadStoredUser);
+  const [loading] = useState(false);
+  const pendingGoogleAuth = useRef(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
+    if (!window.google) return;
+
+    window.google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredential,
     });
-    return () => unsubscribe();
+    window.google.accounts.id.renderButton(
+      document.getElementById('google-signin-hidden'),
+      { theme: 'outline', size: 'large', width: 280 }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function loginWithGoogle() {
+  async function handleGoogleCredential(response) {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      // Verifica se é a primeira vez que esse usuário loga
-      const isNew = result._tokenResponse?.isNewUser;
-      if (isNew) {
-        localStorage.setItem('isNewUser', 'true');
-      }
-      return result;
+      const auth = await api.post('/auth/google', { idToken: response.credential }, { auth: false });
+      setUser(persistSession(auth));
+      pendingGoogleAuth.current?.resolve(auth);
     } catch (err) {
-      if (err.code !== 'auth/cancelled-popup-request' && err.code !== 'auth/popup-closed-by-user') {
-        throw err;
-      }
+      pendingGoogleAuth.current?.reject(err);
+    } finally {
+      pendingGoogleAuth.current = null;
     }
   }
 
+  function loginWithGoogle() {
+    return new Promise((resolve, reject) => {
+      const btn = document.querySelector('#google-signin-hidden div[role="button"]');
+      if (!btn) {
+        reject(new Error('Google ainda não carregou. Recarregue a página.'));
+        return;
+      }
+      pendingGoogleAuth.current = { resolve, reject };
+      btn.click();
+    });
+  }
+
   async function loginWithEmail(email, password) {
-    return signInWithEmailAndPassword(auth, email, password);
+    const auth = await api.post('/auth/login', { email, password }, { auth: false });
+    setUser(persistSession(auth));
   }
 
-  async function registerWithEmail(email, password) {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
-    // Marca como novo usuário no localStorage
-    localStorage.setItem('isNewUser', 'true');
-    return result;
+  async function registerWithEmail(name, email, password) {
+    const auth = await api.post('/auth/register', { name, email, password }, { auth: false });
+    setUser(persistSession(auth));
   }
 
-  async function logout() {
-    return signOut(auth);
+  function logout() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('authUser');
+    setUser(null);
   }
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, logout }}
-    >
-      {!loading && children}
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, logout }}>
+      <div id="google-signin-hidden" style={{ position: 'fixed', top: -9999, left: -9999 }} />
+      {children}
     </AuthContext.Provider>
   );
 }
