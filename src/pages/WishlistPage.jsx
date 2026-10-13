@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { products } from '../data/products';
+import { useProductsData } from '../context/ProductsContext';
 import styles from './WishlistPage.module.css';
 
 export default function WishlistPage() {
     const { wishlistItems, toggleWishlist, addToCart } = useCart();
+    const { products } = useProductsData();
 
     // Cruza os IDs da wishlist com os produtos reais
     const favoriteProducts = products.filter((p) => wishlistItems.includes(p.id));

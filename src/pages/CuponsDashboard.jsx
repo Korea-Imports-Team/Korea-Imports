@@ -1,43 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Copy } from "lucide-react";
+import { api } from "../services/api";
 import "./CuponsDashboard.css";
 
-const mockCoupons = [
-  {
-    id: 1,
-    code: "BEMVINDO10",
-    type: "percentage",
-    value: 10,
-    expiresAt: "2026-12-31",
-    minPurchase: 50,
-    active: true,
-  },
-  {
-    id: 2,
-    code: "FRETEGRATIS",
-    type: "fixed",
-    value: 15,
-    expiresAt: "2026-11-30",
-    minPurchase: 100,
-    active: true,
-  },
-  {
-    id: 3,
-    code: "DESCONTO5",
-    type: "percentage",
-    value: 5,
-    expiresAt: "2026-10-15",
-    minPurchase: null,
-    active: false,
-  },
-];
-
 export default function CuponsDashboard() {
-  const [coupons, setCoupons] = useState(mockCoupons);
+  const [coupons, setCoupons] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [notification, setNotification] = useState("");
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     code: "",
     type: "percentage",
@@ -47,44 +20,68 @@ export default function CuponsDashboard() {
     active: true,
   });
 
+  // 🔄 Carregar cupons do backend ao montar
+  useEffect(() => {
+    loadCoupons();
+  }, []);
+
+  async function loadCoupons() {
+    setLoading(true);
+    try {
+      const data = await api.get('/admin/coupons');
+      setCoupons(data);
+    } catch (err) {
+      setError('Erro ao carregar cupons');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const showNotification = (message) => {
     setNotification(message);
     window.setTimeout(() => setNotification(""), 2500);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     
-    if (editingId) {
-      // Editar cupom existente
-      setCoupons(coupons.map(coupon =>
-        coupon.id === editingId
-          ? {
-              ...coupon,
-              code: formData.code,
-              type: formData.type,
-              value: formData.type === "percentage" ? parseInt(formData.value) : parseFloat(formData.value),
-              expiresAt: formData.expiresAt,
-              minPurchase: formData.minPurchase ? parseFloat(formData.minPurchase) : null,
-              active: formData.active,
-            }
-          : coupon
-      ));
-      showNotification("Cupom atualizado com sucesso!");
+    // Validar se a data de expiração está no futuro
+    const expiryDate = new Date(formData.expiresAt);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (expiryDate <= today) {
+      setError("A data de validade deve ser no futuro");
+      return;
+    }
+    
+    const payload = {
+      code: formData.code,
+      type: formData.type.toUpperCase(),
+      value: formData.type === "percentage" ? parseInt(formData.value) : parseFloat(formData.value),
+      expiresAt: formData.expiresAt,
+      minPurchase: formData.minPurchase ? parseFloat(formData.minPurchase) : null,
+      active: formData.active,
+    };
+
+    console.log("Payload enviado:", payload);
+
+    try {
+      if (editingId) {
+        await api.put(`/admin/coupons/${editingId}`, payload);
+        showNotification("Cupom atualizado com sucesso!");
+      } else {
+        const response = await api.post('/admin/coupons', payload);
+        console.log(" Resposta do backend:", response);
+        showNotification("Cupom criado com sucesso!");
+      }
+      loadCoupons();
       setEditingId(null);
-    } else {
-      // Criar novo cupom
-      const newCoupon = {
-        id: Math.max(...coupons.map(c => c.id), 0) + 1,
-        code: formData.code,
-        type: formData.type,
-        value: formData.type === "percentage" ? parseInt(formData.value) : parseFloat(formData.value),
-        expiresAt: formData.expiresAt,
-        minPurchase: formData.minPurchase ? parseFloat(formData.minPurchase) : null,
-        active: formData.active,
-      };
-      setCoupons([...coupons, newCoupon]);
-      showNotification("Cupom criado com sucesso!");
+    } catch (err) {
+      console.error(" Erro:", err);
+      setError(err.message || "Erro ao salvar cupom");
     }
     
     setIsDialogOpen(false);
@@ -102,7 +99,7 @@ export default function CuponsDashboard() {
     setEditingId(coupon.id);
     setFormData({
       code: coupon.code,
-      type: coupon.type,
+      type: coupon.TYPE,
       value: String(coupon.value),
       expiresAt: coupon.expiresAt,
       minPurchase: coupon.minPurchase ? String(coupon.minPurchase) : "",
@@ -128,10 +125,15 @@ export default function CuponsDashboard() {
     setConfirmDeleteId(id);
   };
 
-  const confirmDeleteCoupon = () => {
-    setCoupons(coupons.filter(coupon => coupon.id !== confirmDeleteId));
-    setConfirmDeleteId(null);
-    showNotification("Cupom removido com sucesso!");
+  const confirmDeleteCoupon = async () => {
+    try {
+      await api.delete(`/admin/coupons/${confirmDeleteId}`);
+      loadCoupons();
+      setConfirmDeleteId(null);
+      showNotification("Cupom removido com sucesso!");
+    } catch (err) {
+      setError(err.message || "Erro ao remover cupom");
+    }
   };
 
   const cancelDelete = () => {
@@ -159,6 +161,18 @@ export default function CuponsDashboard() {
           Criar Cupom
         </button>
       </div>
+
+      {loading && (
+        <div className="cd-toast">
+          <span>Carregando cupons...</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="cd-toast" style={{ background: '#dc2626' }}>
+          <span>{error}</span>
+        </div>
+      )}
 
       {notification && (
         <div className="cd-toast">
@@ -214,9 +228,9 @@ export default function CuponsDashboard() {
                     </button>
                   </div>
                 </td>
-                <td className="cd-capitalize">{coupon.type === "percentage" ? "Porcentagem" : "Valor Fixo"}</td>
+                <td className="cd-capitalize">{coupon.TYPE === "percentage" ? "Porcentagem" : "Valor Fixo"}</td>
                 <td className="cd-font-medium">
-                  {coupon.type === "percentage"
+                  {coupon.TYPE === "percentage"
                     ? `${coupon.value}%`
                     : `R$ ${coupon.value.toFixed(2)}`}
                 </td>
