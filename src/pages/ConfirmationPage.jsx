@@ -7,15 +7,15 @@ const fmt = (n) => `R$ ${Number(n).toFixed(2).replace('.', ',')}`;
 
 function FakeQRCode() {
     const pattern = [
-        [1,1,1,1,1,1,1,0,1],[1,0,0,0,0,0,1,0,0],[1,0,1,1,1,0,1,0,1],
-        [1,0,1,1,1,0,1,0,1],[1,0,0,0,0,0,1,0,0],[1,1,1,1,1,1,1,0,1],
-        [0,0,0,0,0,0,0,0,1],[1,0,1,1,0,1,0,1,0],[1,1,1,0,1,0,1,1,1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1], [1, 0, 0, 0, 0, 0, 1, 0, 0], [1, 0, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 0, 1], [1, 0, 0, 0, 0, 0, 1, 0, 0], [1, 1, 1, 1, 1, 1, 1, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 1, 1, 0, 1, 0, 1, 0], [1, 1, 1, 0, 1, 0, 1, 1, 1],
     ];
     const cell = 18;
     return (
         <svg width={9 * cell} height={9 * cell} viewBox={`0 0 ${9 * cell} ${9 * cell}`}>
             {pattern.map((row, y) => row.map((v, x) => v
-                ? <rect key={`${x}-${y}`} x={x*cell} y={y*cell} width={cell-1} height={cell-1} fill="#0D0D0D" rx="2"/>
+                ? <rect key={`${x}-${y}`} x={x * cell} y={y * cell} width={cell - 1} height={cell - 1} fill="#0D0D0D" rx="2" />
                 : null
             ))}
         </svg>
@@ -24,7 +24,7 @@ function FakeQRCode() {
 
 export default function ConfirmationPage() {
     const location = useLocation();
-    const navigate  = useNavigate();
+    const navigate = useNavigate();
     const { clearCart } = useCart();
     const saved = useRef(false);
     const state = location.state || {};
@@ -44,49 +44,14 @@ export default function ConfirmationPage() {
         couponDiscount = 0,
     } = state;
 
-    const pixCode    = `00020126580014BR.GOV.BCB.PIX0136korea-imports@pix.com.br520400005303986540${total.toFixed(2)}5802BR5913KoreaImports6009SAOPAULO6304${orderId.slice(-4)}`;
+    const pixCode = `00020126580014BR.GOV.BCB.PIX0136korea-imports@pix.com.br520400005303986540${total.toFixed(2)}5802BR5913KoreaImports6009SAOPAULO6304${orderId.slice(-4)}`;
     const boletoCode = `23793.38128 60007.827136 91000.063305 1 ${Math.floor(total * 100).toString().padStart(14, '0')}`;
 
-    // ✅ Salva o pedido no localStorage uma única vez
+
     useEffect(() => {
         if (saved.current) return;
         saved.current = true;
-
         clearCart();
-
-        const newOrder = {
-            id: orderId,
-            createdAt,
-            paymentMethod,
-            shippingOption,
-            shippingPrice,
-            subtotal,
-            discount,
-            total,
-            couponApplied,
-            couponDiscount,
-            form,
-            cartItems,
-            status: paymentMethod === 'credito' || paymentMethod === 'debito'
-                ? 'em_transito'
-                : 'aguardando',
-            tracking: [
-                { date: new Date(createdAt).toLocaleString('pt-BR'), label: 'Pedido confirmado', done: true },
-                { date: paymentMethod === 'credito' || paymentMethod === 'debito'
-                    ? new Date(createdAt).toLocaleString('pt-BR') : '',
-                  label: 'Pagamento aprovado',
-                  done: paymentMethod === 'credito' || paymentMethod === 'debito' },
-                { date: '', label: 'Em separação no estoque', done: false },
-                { date: '', label: 'Enviado para transportadora', done: false },
-                { date: '', label: 'Em trânsito', done: false },
-                { date: '', label: 'Entregue', done: false },
-            ],
-        };
-
-        try {
-            const existing = JSON.parse(localStorage.getItem('orders') || '[]');
-            localStorage.setItem('orders', JSON.stringify([newOrder, ...existing]));
-        } catch { /* silent */ }
     }, []);
 
     const dateStr = new Date(createdAt).toLocaleDateString('pt-BR', {
@@ -124,7 +89,7 @@ export default function ConfirmationPage() {
                                     <div className={styles.paymentBoxHeader}>
                                         <div className={styles.paymentBoxIcon} style={{ background: '#dcfce7' }}>
                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M12 2L2 7l10 5 10-5-10-5"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                                                <path d="M12 2L2 7l10 5 10-5-10-5" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
                                             </svg>
                                         </div>
                                         <div>
@@ -144,7 +109,7 @@ export default function ConfirmationPage() {
                                                 <span className={styles.codeText}>{pixCode.slice(0, 55)}...</span>
                                                 <button className={styles.copyBtn} onClick={() => navigator.clipboard.writeText(pixCode)}>
                                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                                        <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                                                     </svg>
                                                     Copiar
                                                 </button>
@@ -165,8 +130,8 @@ export default function ConfirmationPage() {
                                     <div className={styles.paymentBoxHeader}>
                                         <div className={styles.paymentBoxIcon} style={{ background: '#fffbeb' }}>
                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                                                <polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>
+                                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                                                <polyline points="14 2 14 8 20 8" /><line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="16" y2="17" />
                                             </svg>
                                         </div>
                                         <div>
@@ -184,14 +149,14 @@ export default function ConfirmationPage() {
                                             <span className={styles.codeText}>{boletoCode}</span>
                                             <button className={styles.copyBtn} onClick={() => navigator.clipboard.writeText(boletoCode)}>
                                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                                                 </svg>
                                                 Copiar linha digitável
                                             </button>
                                         </div>
                                         <button className={styles.downloadBtn}>
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
                                             </svg>
                                             Baixar Boleto PDF
                                         </button>
@@ -209,7 +174,7 @@ export default function ConfirmationPage() {
                                     <div className={styles.paymentBoxHeader}>
                                         <div className={styles.paymentBoxIcon} style={{ background: '#eff6ff' }}>
                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1353a7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
                                             </svg>
                                         </div>
                                         <div>
