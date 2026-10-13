@@ -34,10 +34,10 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
     try {
-      await registerWithEmail(form.email, form.password);
+      await registerWithEmail(form.name, form.email, form.password);
       navigate('/');
     } catch (err) {
-      if (err.code === 'auth/email-already-in-use') {
+      if (err.status === 422) {
         setError('Este e-mail já está cadastrado.');
       } else {
         setError('Erro ao criar conta. Tente novamente.');
