@@ -5,6 +5,17 @@ import { useCart } from '../context/CartContext';
 import styles from './ProductCard.module.css';
 
 export default function ProductCard({ product }) {
+  console.log('🖼️ ProductCard renderizando:', product);
+  
+  if (!product) {
+    console.error('❌ Produto é null/undefined!');
+    return <div>Erro: Produto inválido</div>;
+  }
+  
+  if (!product.image) {
+    console.warn('⚠️ Produto sem imagem:', product.name, product);
+  }
+  
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
   const inWishlist = isInWishlist(product.id);
   const [toast, setToast] = useState(false);
