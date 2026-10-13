@@ -2,18 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, MapPin, Lock, Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 import styles from './ProfilePage.module.css';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-function getProfile() {
-    try { return JSON.parse(localStorage.getItem('userProfile') || '{}'); }
-    catch { return {}; }
-}
-
-function saveProfile(data) {
-    try { localStorage.setItem('userProfile', JSON.stringify(data)); }
-    catch { /* silent */ }
-}
 
 function getAddresses() {
     try { return JSON.parse(localStorage.getItem('savedAddresses') || '[]'); }
@@ -172,59 +164,122 @@ export default function ProfilePage() {
     const navigate         = useNavigate();
     const [activeTab, setActiveTab] = useState('dados');
 
-    const [profile, setProfile]           = useState(() => getProfile());
+    const [profile, setProfile]           = useState({});
     const [editingProfile, setEditingProfile] = useState(false);
     const [profileDraft, setProfileDraft] = useState(profile);
     const [profileSaved, setProfileSaved] = useState(false);
+    const [profileError, setProfileError] = useState('');
 
-    function saveProfileData() {
-        saveProfile(profileDraft);
+    // Carrega o perfil do back ao montar
+    useEffect(() => {
+        api.get('/users/me')
+            .then((data) => setProfile((prev) => ({ ...prev, ...data })))
+            .catch(() => {});
+    }, []);
+
+    async function saveProfileData() {
+        setProfileError('');
+        try {
+            await api.put('/users/me', { name: profileDraft.name });
+        } catch (err) {
+            setProfileError(err.message);
+            return;
+        }
         setProfile(profileDraft);
         setEditingProfile(false);
         setProfileSaved(true);
         setTimeout(() => setProfileSaved(false), 2500);
     }
 
-    const [addresses, setAddresses]     = useState(() => getAddresses());
+    const [addresses, setAddresses]     = useState([]);
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingAddr, setEditingAddr] = useState(null);
+    const [addressLoading, setAddressLoading] = useState(true);
+    const [addressError, setAddressError] = useState('');
 
-    function handleSaveAddress(addr) {
-        let updated = addr.isDefault
-            ? addresses.map((a) => ({ ...a, isDefault: false }))
-            : [...addresses];
-        const exists = updated.findIndex((a) => a.id === addr.id);
-        if (exists >= 0) updated[exists] = addr;
-        else updated = [addr, ...updated];
-        setAddresses(updated);
-        saveAddresses(updated);
-        setShowAddForm(false);
-        setEditingAddr(null);
+    // 🔄 Carregar endereços do backend ao montar
+    useEffect(() => {
+        loadAddresses();
+    }, [user]);
+
+    async function loadAddresses() {
+        if (!user) return;
+        setAddressLoading(true);
+        try {
+            const data = await api.get('/users/me/addresses');
+            setAddresses(data || []);
+        } catch (err) {
+            setAddressError('Erro ao carregar endereços');
+            console.error(err);
+        } finally {
+            setAddressLoading(false);
+        }
     }
 
-    function handleDeleteAddress(id) {
-        const updated = addresses.filter((a) => a.id !== id);
-        setAddresses(updated);
-        saveAddresses(updated);
+    async function handleSaveAddress(addr) {
+        setAddressError('');
+        try {
+            if (addr.id) {
+                // Editar endereço existente
+                await api.put(`/users/me/addresses/${addr.id}`, addr);
+            } else {
+                // Criar novo endereço
+                await api.post('/users/me/addresses', addr);
+            }
+            
+            // Se é padrão, chamar PATCH para sincronizar
+            if (addr.isDefault) {
+                await api.patch(`/users/me/addresses/${addr.id}/default`);
+            }
+            
+            loadAddresses();
+            setShowAddForm(false);
+            setEditingAddr(null);
+        } catch (err) {
+            setAddressError(err.message || 'Erro ao salvar endereço');
+        }
     }
 
-    function handleSetDefault(id) {
-        const updated = addresses.map((a) => ({ ...a, isDefault: a.id === id }));
-        setAddresses(updated);
-        saveAddresses(updated);
+    async function handleDeleteAddress(id) {
+        setAddressError('');
+        try {
+            await api.delete(`/users/me/addresses/${id}`);
+            loadAddresses();
+        } catch (err) {
+            setAddressError(err.message || 'Erro ao remover endereço');
+        }
+    }
+
+    async function handleSetDefault(id) {
+        setAddressError('');
+        try {
+            await api.patch(`/users/me/addresses/${id}/default`);
+            loadAddresses();
+        } catch (err) {
+            setAddressError(err.message || 'Erro ao definir endereço padrão');
+        }
     }
 
     const [pwd, setPwd]           = useState({ current: '', next: '', confirm: '' });
     const [pwdError, setPwdError] = useState('');
     const [pwdSaved, setPwdSaved] = useState(false);
 
-    function handlePwdSave() {
+    async function handlePwdSave() {
         if (pwd.next.length < 6)        { setPwdError('A senha deve ter pelo menos 6 caracteres.'); return; }
         if (pwd.next !== pwd.confirm)   { setPwdError('As senhas não coincidem.'); return; }
+        
         setPwdError('');
-        setPwdSaved(true);
-        setPwd({ current: '', next: '', confirm: '' });
-        setTimeout(() => setPwdSaved(false), 2500);
+        try {
+            await api.put('/users/me/password', {
+                currentPassword: pwd.current,
+                newPassword: pwd.next,
+            });
+            setPwdSaved(true);
+            setPwd({ current: '', next: '', confirm: '' });
+            setTimeout(() => setPwdSaved(false), 2500);
+        } catch (err) {
+            setPwdError(err.message || 'Erro ao alterar senha');
+        }
     }
 
     const displayName = profile.name || user?.displayName || user?.email?.split('@')[0] || 'Usuário';
@@ -294,6 +349,7 @@ export default function ProfilePage() {
                                         <Check size={16} /> Dados salvos com sucesso!
                                     </div>
                                 )}
+                                {profileError && <p className={styles.afError}>{profileError}</p>}
 
                                 {editingProfile ? (
                                     <div className={styles.profileForm}>
@@ -405,6 +461,9 @@ export default function ProfilePage() {
                                         </button>
                                     )}
                                 </div>
+
+                                {addressLoading && <p className={styles.afHint}>Carregando endereços...</p>}
+                                {addressError && <p className={styles.afError}>{addressError}</p>}
 
                                 {showAddForm && (
                                     <AddressForm onSave={handleSaveAddress} onCancel={() => setShowAddForm(false)} />
