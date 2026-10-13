@@ -1,38 +1,67 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { api } from '../services/api';
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
+  const { user } = useAuth();
 
-  // 🛒 Carrinho com persistência
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem('cart');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // 🛒 Carrinho sincronizado com backend
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // ❤️ Wishlist com persistência
-  const [wishlistItems, setWishlistItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem('wishlist');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // ❤️ Wishlist — carregada do back após login
+  const [wishlistItems, setWishlistItems] = useState([]);
 
-  // 💾 Salvar carrinho sempre que mudar
+  // 🔄 Carregar carrinho do backend quando o usuário loga
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    if (!user) {
+      setCartItems([]);
+      setWishlistItems([]);
+      return;
+    }
 
-  // 💾 Salvar wishlist sempre que mudar
-  useEffect(() => {
-    localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
-  }, [wishlistItems]);
+    setLoading(true);
+    // Carregar carrinho do backend
+    api.get('/users/me/cart')
+      .then((response) => {
+        // Converter resposta do backend para formato local
+        const items = response.items.map((item) => ({
+          id: item.productId,
+          name: item.productName,
+          image: item.productImage,
+          price: item.price,
+          selectedSize: item.size,
+          quantity: item.quantity,
+        }));
+        setCartItems(items);
+      })
+      .catch(() => setCartItems([])) // Se falhar, começa vazio
+      .finally(() => setLoading(false));
+
+    // Carregar wishlist
+    api.get('/users/me/wishlist')
+      .then((products) => setWishlistItems(products.map((p) => p.id)))
+      .catch(() => {});
+  }, [user]);
+
+  // 💾 Sincronizar carrinho com backend quando mudar
+  const syncCartToBackend = useCallback(async (items) => {
+    if (!user) return;
+    try {
+      const payload = {
+        items: items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+          size: item.selectedSize,
+        })),
+      };
+      await api.post('/users/me/cart', payload);
+    } catch (error) {
+      console.error('Erro ao sincronizar carrinho:', error);
+    }
+  }, [user]);
 
   // ➕ Adicionar ao carrinho
   const addToCart = useCallback((product) => {
@@ -41,62 +70,87 @@ export function CartProvider({ children }) {
         (item) => item.id === product.id && item.selectedSize === product.selectedSize
       );
 
+      let updated;
       if (existing) {
-        return prev.map((item) =>
+        updated = prev.map((item) =>
           item.id === product.id && item.selectedSize === product.selectedSize
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
+      } else {
+        updated = [...prev, { ...product, quantity: 1 }];
       }
-
-      return [...prev, { ...product, quantity: 1 }];
+      
+      syncCartToBackend(updated);
+      return updated;
     });
-  }, []);
+  }, [syncCartToBackend]);
 
   // ❌ Remover item
-  const removeFromCart = useCallback((productId, selectedSize) => {
-    setCartItems((prev) =>
-      prev.filter(
-        (item) => !(item.id === productId && item.selectedSize === selectedSize)
-      )
-    );
-  }, []);
-
-  // ➖ Diminuir quantidade
-  const decreaseQuantity = useCallback((productId, selectedSize) => {
-    setCartItems((prev) => {
-      const existing = prev.find(
-        (item) => item.id === productId && item.selectedSize === selectedSize
-      );
-
-      if (existing && existing.quantity === 1) {
-        return prev.filter(
+  const removeFromCart = useCallback(
+    (productId, selectedSize) => {
+      setCartItems((prev) => {
+        const updated = prev.filter(
           (item) => !(item.id === productId && item.selectedSize === selectedSize)
         );
-      }
+        syncCartToBackend(updated);
+        return updated;
+      });
+    },
+    [syncCartToBackend]
+  );
 
-      return prev.map((item) =>
-        item.id === productId && item.selectedSize === selectedSize
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      );
-    });
-  }, []);
+  // ➖ Diminuir quantidade
+  const decreaseQuantity = useCallback(
+    (productId, selectedSize) => {
+      setCartItems((prev) => {
+        const existing = prev.find(
+          (item) => item.id === productId && item.selectedSize === selectedSize
+        );
 
-  // 🧼 Limpar carrinho (🔥 útil no checkout)
-  const clearCart = useCallback(() => {
+        let updated;
+        if (existing && existing.quantity === 1) {
+          updated = prev.filter(
+            (item) => !(item.id === productId && item.selectedSize === selectedSize)
+          );
+        } else {
+          updated = prev.map((item) =>
+            item.id === productId && item.selectedSize === selectedSize
+              ? { ...item, quantity: item.quantity - 1 }
+              : item
+          );
+        }
+        syncCartToBackend(updated);
+        return updated;
+      });
+    },
+    [syncCartToBackend]
+  );
+
+  // 🧼 Limpar carrinho
+  const clearCart = useCallback(async () => {
     setCartItems([]);
-    localStorage.removeItem('cart'); // 🔥 garante limpeza total
-  }, []);
+    if (user) {
+      try {
+        await api.delete('/users/me/cart');
+      } catch (error) {
+        console.error('Erro ao limpar carrinho:', error);
+      }
+    }
+  }, [user]);
 
-  // ❤️ Wishlist toggle
-  const toggleWishlist = useCallback((productId) => {
-    setWishlistItems((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
-    );
-  }, []);
+  // ❤️ Wishlist toggle — sincroniza com back
+  const toggleWishlist = useCallback(async (productId) => {
+    if (!user) return;
+    try {
+      const result = await api.post(`/users/me/wishlist/${productId}`);
+      setWishlistItems((prev) =>
+        result.added ? [...prev, productId] : prev.filter((id) => id !== productId)
+      );
+    } catch (error) {
+      console.error('Erro ao toggle wishlist:', error);
+    }
+  }, [user]);
 
   // 🔍 Verificar wishlist
   const isInWishlist = useCallback(
@@ -113,6 +167,7 @@ export function CartProvider({ children }) {
         cartItems,
         cartCount,
         wishlistItems,
+        loading,
         addToCart,
         removeFromCart,
         decreaseQuantity,
